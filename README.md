@@ -37,3 +37,11 @@ Looking into these files in a text editor, it can be observed that the entire co
 ### Problems encountered for these examples:
 The simulation seems to be slow for examples involving use of various kinds of samplers, since it becomes dependent on the processing power of the host machine on which the simulator runs. The way to resolve this problem might be to profile the execution and accordingly make changes in the source code to reduce the overheads.
 
+# Trying out examples for multinode:
+
+In the directory *cotson/src/examples* there are a few examples on multinode simulation.
+First, lets try the twonodes.in example:
+```
+$make run_twonodes
+```
+If the execution is 
