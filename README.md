@@ -50,3 +50,15 @@ If the execution goes properly, two windows would be invoked, each representing 
 ## Observations for the twonodes example:
 Looking into the configuration file *twonodes.in*, it can be seen that a few commands are different, and those are specific to a multinode simulation. The configuration for hardware specifications are similar to as seen in previous examples. Along with that, if *slirp* is set to *true*, the nodes can be *NAT* with the external network.
 
+### Problems encountered for this example:
+Many a times, the shell script isn't executed even if the nodes are invoked. Thus, repeatability of execution is not guaranteed. The only solution I found is rebooting the host system.
+
+# Benchmarking Systems
+
+## MPI benchmark:
+The following MPI based benchmark was considered:
+https://github.com/LLNL/mpiBench
+
+### Testing of MPI on native system:
+This benchmark was tested on a native system on a single machine at first. The MPI package *mpich* was installed on the native system. *mpirun* command was used, wherein attributes, such as *number of processes*, was used, wherein, number of processes tried were 1,2,4 and 8. 
+Later on
