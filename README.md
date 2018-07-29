@@ -63,3 +63,7 @@ https://github.com/LLNL/mpiBench
 This benchmark was tested on a native system on a single machine at first. The MPI package *mpich* was installed on the native system. *mpirun* command was used, wherein attributes, such as *number of processes*, was used, wherein, number of processes tried were 1,2,4 and 8. 
 Later on, this benchmark was run on two independent systems which were present on a single network. So, the benchmark was run on a cluster of 2 nodes. For this, **passwordless ssh** was set between the two machines by exchanging *ssh keys*. Then, a directory was shared between these two systems using **NFS**(Network File System). Also, hostnames were configured on both these machines.
 Using the same *mpirun* command on one of the machines and using the attribute *hosts*, the hostnames of theses machines are specified on which the benchmark was run. Also, 1,2,4 and 8 processes per node were benchmarked.
+
+### Running MPI Benchmark on COTSon:
+- In order to run this benchmark on COTSon, first all the packages related to MPI needs to be installed on the images that would be run on COTSon nodes. Then, it's important to set passwordless connection between the two nodes that need to be connected. The images that are already present in the downloaded COTSon package are outdated (Ubuntu 9.10), thus, new images were needed to be downloaded.
+- After these images were downloaded, MPI packages were installed 
