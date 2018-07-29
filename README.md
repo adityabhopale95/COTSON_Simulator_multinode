@@ -66,4 +66,7 @@ Using the same *mpirun* command on one of the machines and using the attribute *
 
 ### Running MPI Benchmark on COTSon:
 - In order to run this benchmark on COTSon, first all the packages related to MPI needs to be installed on the images that would be run on COTSon nodes. Then, it's important to set passwordless connection between the two nodes that need to be connected. The images that are already present in the downloaded COTSon package are outdated (Ubuntu 9.10), thus, new images were needed to be downloaded.
-- After these images were downloaded, MPI packages were installed 
+- After the image is downloaded, MPI packages were needed to be installed on the same. For this, virtualbox was used.
+- Virtualbox wasn't able to open this image, and hence needed this image to be converted to *.vdi* configuration.
+- After converting the image to *.vdi* format, this file was opened in VirtualBox, and thus desired packages were installed.
+- The *.vdi* file was reconverted to raw format *(.img)* so that it could be run on COTSon.
