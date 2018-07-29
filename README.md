@@ -38,10 +38,15 @@ Looking into these files in a text editor, it can be observed that the entire co
 The simulation seems to be slow for examples involving use of various kinds of samplers, since it becomes dependent on the processing power of the host machine on which the simulator runs. The way to resolve this problem might be to profile the execution and accordingly make changes in the source code to reduce the overheads.
 
 # Trying out examples for multinode:
-
 In the directory *cotson/src/examples* there are a few examples on multinode simulation.
 First, lets try the twonodes.in example:
 ```
 $make run_twonodes
 ```
-If the execution is 
+This execution aims to creation of two cotson nodes and execute a script which pings between these two nodes in specific intervals, and after the execution is completed, a complete trace of this communication is logged.
+
+If the execution goes properly, two windows would be invoked, each representing a single cotson node.
+
+## Observations for the twonodes example:
+Looking into the configuration file *twonodes.in*, it can be seen that a few commands are different, and those are specific to a multinode simulation. The configuration for hardware specifications are similar to as seen in previous examples. Along with that, if *slirp* is set to *true*, the nodes can be *NAT* with the external network.
+
