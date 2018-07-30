@@ -70,3 +70,12 @@ Using the same *mpirun* command on one of the machines and using the attribute *
 - Virtualbox wasn't able to open this image, and hence needed this image to be converted to *.vdi* configuration.
 - After converting the image to *.vdi* format, this file was opened in VirtualBox, and thus desired packages were installed.
 - The *.vdi* file was reconverted to raw format *(.img)* so that it could be run on COTSon.
+- The benchmark was tried in the similar way as done on native machine i.e. single node first, and then multinode.
+
+### Problems encountered:
+- In COTSon simulated environment, the functional.in script was accordingly being configured for the newly created image to run for a single node. The MPI benchmark runs properly for a single node having multiple processes (1,2,4, etc.). 
+- But, similar image doesn't work when these images are run for a multinode environment. The raw images which were unmodified, worked fine in a multinode environment in COTSon, where two nodes ping each other. But when there were conversions for installing the packages as mentioned before, they fail to execute any script in multinode simulation giving an error *'Read Only File System'* along with many others.
+- For verifying any problem with the modified image, a similar network of multinodes was created on VirtualBox and was run for the modified image. The simulation ran properly, thus indicating no problem with the modified image.
+
+## Future scope:
+If it is possible to run a multinode simulation on COTSon, it would be benificial in terms of hardware design, especially for a distributed system. Since, the hardware on which the benchmark runs is configurable in the *lua* script, the benchmark can be thus tested for various hardware configurations, and thus performance can be adjudged.
