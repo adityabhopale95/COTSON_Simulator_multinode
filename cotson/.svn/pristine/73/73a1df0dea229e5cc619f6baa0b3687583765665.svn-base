@@ -1,8 +1,0 @@
-#!/bin/sh
-
-xget $D/add /tmp/add
-chmod +x /tmp/add
-
-/tmp/add
-
-touch terminate; xput terminate terminate

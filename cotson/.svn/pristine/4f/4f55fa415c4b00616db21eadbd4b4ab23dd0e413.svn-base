@@ -1,4 +1,0 @@
-#!/bin/bash
-rm -f /tmp/lua*
-rm -rf /tmp/test*
-rm -rf /tmp/cotson*

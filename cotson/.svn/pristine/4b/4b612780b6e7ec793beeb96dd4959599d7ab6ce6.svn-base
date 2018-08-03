@@ -1,6 +1,0 @@
-defscrollback 100000
-deflogin off
-logfile ../data/screen.log
-logfile flush 1
-multiuser on
-shelltitle shelltitle

@@ -1,9 +1,0 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  configuration: MyString
-  nodes: 1
-
-two:
-  configuration: MyString
-  nodes: 1
