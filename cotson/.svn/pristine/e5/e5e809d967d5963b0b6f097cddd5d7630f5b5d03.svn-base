@@ -1,0 +1,9 @@
+#!/bin/bash
+## Simnow wrapper
+
+wd=`pwd`
+sd=`dirname $0` 
+sd=`cd $sd/../simnow;pwd`
+
+export LD_LIBRARY_PATH=$sd/linuxlibs:$LD_LIBRARY_PATH
+$sd/simnow -l $sd/libs -i $sd/Images -x $sd/icons -a $sd/analyzers $*

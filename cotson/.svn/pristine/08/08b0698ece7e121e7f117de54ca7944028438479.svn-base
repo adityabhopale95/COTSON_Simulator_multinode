@@ -1,0 +1,29 @@
+# IMPORTANT: Changes of this file will only
+# be effective after all the database_[HOSTNAME].yml
+# are deleted.
+
+# This file configures the central database with
+# data from the experiments
+
+production:
+  adapter: postgresql
+  host: hpl-bro32.esp.hp.com
+  port: 5432
+  database: cotson
+  username: cotson
+
+development:
+  adapter: postgresql
+  host: hpl-bro05.esp.hp.com
+  port: 5432
+  database: cotson
+  username: cotson
+  password: cotson
+
+test:
+  adapter: postgresql
+  host: hpl-bro32.esp.hp.com
+  port: 5432
+  database: cotson
+  username: cotson
+  

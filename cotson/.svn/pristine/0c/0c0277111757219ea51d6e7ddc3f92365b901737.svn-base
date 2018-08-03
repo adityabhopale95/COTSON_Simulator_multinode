@@ -1,0 +1,17 @@
+This directory contains a few samples BSDs and an example
+on how to create a disk image. Because SimNow can use raw
+disk images as well, an easy way to create a disk image
+for a guest OS is to use an external virtualizer, such as 
+qemu/kvm (which is the provided example).
+
+In the example makefile the 'vmbuild' script uses 
+Ubuntu's 'vmbuilder' facility to invoke debootstrap 
+and create a barebone karmic (ubuntu 9.10) image with 
+a minimal installation. After conversion to 'raw' format
+the disk image can then be used as a SimNow disk.
+
+The disk can obviously also be used by kvm/qemu with 
+run-kvm.sh, to then make successive modifications.
+
+The 'test' directory contain traces used by the regression 
+tests with the abaeterno injector.

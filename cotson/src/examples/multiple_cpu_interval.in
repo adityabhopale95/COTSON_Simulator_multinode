@@ -1,0 +1,80 @@
+options = {
+    fastforward="500M", -- skip initial 500ms (500M nanos) for programs to start
+	max_samples=5, -- after some simulation samples, the simulation ends
+	sampler={ type="interval", functional="1M", warming="100k", simulation="100k", },
+		-- the sampler will execute warming, simulation and then functional for 
+		-- their respective interval lengths. After the first simulation sample, though
+		-- it will finish (due to max_samples being 1)
+	heartbeat={ type="file_last", logfile="multiple_cpu_interval.log" }, 
+		-- one result file called multiple_cpu_simple.log
+}
+
+-- change this to point to your bsd and hdd
+-- you can use absolute paths here or else
+-- placed the bsd and hdd in the data directory
+-- of this distribution
+simnow.commands=function()
+	use_bsd('4p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+    -- run 4 copies of gcc
+	send_keyboard('cd /home/user; sh 4xgcc.sh')
+end
+
+function build()
+	-- we assign disk timers to all the disks in the system
+	i=0
+	while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+
+	-- we assign nic timers to all the disks in the system
+	i=0
+	while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+	
+	-- memory and the coherence buses are shared among all cpus
+	mem=Memory{ name="main", latency=150 } 
+	bus=Bus{ name="bus", protocol='MOESI', latency=25, bandwidth=4, next=mem } 
+	busT=Bus{ name="tlb_bus", protocol='MOESI', latency=25, bandwidth=4, next=mem }
+
+	i=0
+	while i < cpus() do
+
+		-- each cpu has its own L1 and L2 caches 
+		cpu=get_cpu(i)
+		cpu:timer{ name='cpu'..i, type="timer1" }
+	
+		 l2=Cache{ name="l2cache", size="512kB", 
+			line_size=16, latency=20, num_sets=4, next=mem, 
+			write_policy="WB", write_allocate="true" }
+		 t2=TLB{ name="l2tlb", page_size="4kB", 
+			entries=512, latency=80, num_sets=4, next=mem, 
+			write_policy="WB", write_allocate="true" }
+
+		 ic=Cache{ name="icache", size="16kB", line_size=16, 
+			latency=0, num_sets=2, next=l2, 
+			write_policy="WT", write_allocate="false" }
+		 dc=Cache{ name="dcache", size="16kB", line_size=16, 
+			latency=0, num_sets=2, next=l2, 
+			write_policy="WT", write_allocate="false" }
+		 it=TLB{ name="itlb", page_size="4kB", entries=40, 
+			latency=0, num_sets=40, next=t2,	
+			write_policy="WT", write_allocate="false" }
+		 dt=TLB{ name="dtlb", page_size="4kB", entries=40, 
+			latency=0, num_sets=40, next=t2, 
+			write_policy="WT", write_allocate="false" }
+		cpu:instruction_cache(ic)
+		cpu:data_cache(dc)
+		cpu:instruction_tlb(it)
+		cpu:data_tlb(dt)
+
+		i=i+1
+	end
+end
+-- vim:ft=lua

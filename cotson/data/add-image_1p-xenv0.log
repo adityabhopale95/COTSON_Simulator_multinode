@@ -1,0 +1,297 @@
+################ CREATING /home/asbhopal/Downloads/installation_dir/cotson/data/1p-xenv0.bsd ############
+SECONDS=20
+Using image path: "/home/asbhopal/Downloads/installation_dir/cotson/data"
+Known Device: Deerhound RevB QuadCore Socket L1
+Known Device: Intel(R) Pro/1000 MT/PT Desktop Network Adapter
+Known Device: USB JumpDrive
+Known Device: AMD-8111 I/O Hub
+Known Device: AMD-8131 PCI-X Controller
+Known Device: AMD-8132 PCI-X Controller
+Known Device: AMD-8151 AGP Tunnel
+Known Device: Debugger
+Known Device: AT24C Device
+Known Device: AweSim Processor
+Known Device: Dimm Bank
+Known Device: Emerald Graphics
+Known Device: ITE IT8712 SIO
+Known Device: SMSC KBC1100
+Known Device: LTC4306 Device
+Known Device: Memory Device
+Known Device: PCA9548 Device
+Known Device: PCA9556 Device
+Known Device: PCI Bus
+Known Device: ATI RD790/RD780/RX780 Host Bridge Tunnel 
+Known Device: ATI-RS780/RS880 Host Bridge Tunnel
+Known Device: ATI Radeon HD 3870
+Known Device: ATI-SB600 I/O Hub
+Known Device: ATI-SB700 I/O Hub
+Known Device: ATI-SB800 I/O Hub
+Known Device: AMD 8th Generation Integrated Northbridge
+Known Device: SMB Hub Device
+Known Device: Winbond W83627HF SIO
+Known Device: Machine
+Known Device: Matrox(R) MGA-G4x0 Graphics Adapter
+Known Device: Unnamed Group
+Using library path: "./libs"
+
+1 exec> open /home/asbhopal/Downloads/installation_dir/cotson/data/1p-xenv0-reset.bsd
+Opening "/home/asbhopal/Downloads/installation_dir/cotson/data/1p-xenv0-reset.bsd"
+created device Machine
+Instructions per Microsecond: 3200
+CPU Model Name: Opteron
+System Bus Frequency: 800
+CPU Clock Mul: 0
+Turbo_Port61: 0
+Turbo_Vsync: 0
+Guard Memory Required: TRUE
+CPU Manages Cycles: TRUE
+Disk Block Cache Size: 64K
+Disk Block Cache Depth: 5
+Disk Block Cache Bits: 12
+info: creating device #0 "AMD 8th Generation Integrated Northbridge"
+info: creating device #1 "Dimm Bank"
+info: creating device #2 "AMD-8111 I/O Hub"
+info: creating device #3 "Memory Device"
+info: creating device #4 "Winbond W83627HF SIO"
+info: creating device #5 "SMB Hub Device"
+info: creating device #6 "PCI Bus"
+info: creating device #7 "Debugger"
+info: creating device #8 "AweSim Processor"
+info: creating device #9 "AMD-8132 PCI-X Controller"
+info: creating device #10 "PCI Bus"
+info: creating device #11 "PCI Bus"
+info: creating device #12 "PCA9548 Device"
+info: creating device #13 "AT24C Device"
+info: creating device #14 "USB JumpDrive"
+info: creating device #15 "Emerald Graphics"
+Could allocate map memory
+info: creating device #16 "Intel(R) Pro/1000 MT/PT Desktop Network Adapter"
+MSG: The following devices have been updated, please check their configuration and re-save.
+AMD 8th Generation Integrated Northbridge #-1
+Dimm Bank #0
+AMD-8111 I/O Hub #1
+Memory Device #2
+
+BSD Load completed!
+
+1 exec> SetLogConsoleEnabled 1
+
+1 exec> ide:0.image master ../data/xenv0.img
+ATA: Image [../data/xenv0.img] does not have an ID field.
+MASTER drive Image file is now ../data/xenv0.img
+
+1 exec> ide:0.journal master on
+Journaling was already enabled
+
+1 exec> e1000.linkconnect down
+
+1 exec> e1000.setmediatorhost off
+Mediator host has not been configuired
+
+1 exec> e1000.setmacaddress fa:cd:00:00:00:00
+MAC Addr: fa:cd:00:00:00:00
+
+1 exec> getruntimeduration
+RunTimeDuration:0
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+Dimmdevice: Bank 0, Simulated Size 10000000
+CorruptByte-DQSReceiverEnableTiming: 0x21	 MAX: 0x20 - (channel-0,DIMM-0)
+
+1 exec> getruntimeduration
+RunTimeDuration:1000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:2000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+e1000: Rom access at fe000000
+
+1 exec> getruntimeduration
+RunTimeDuration:3000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> keyboard.key 1C 9C
+
+1 exec> getruntimeduration
+RunTimeDuration:4000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:5000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:6000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:7000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:8000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:9000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+Changing mouse scaling to 2:1
+Changing mouse scaling to 1:1
+
+1 exec> getruntimeduration
+RunTimeDuration:10000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+Changing mouse scaling to 2:1
+Changing mouse scaling to 1:1
+
+1 exec> getruntimeduration
+RunTimeDuration:11000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:12000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:13000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:14000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:15000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:16000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:17000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:18000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> getruntimeduration
+RunTimeDuration:19000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> keyboard.key 13 93
+
+1 exec> keyboard.key 18 98
+
+1 exec> keyboard.key 18 98
+
+1 exec> keyboard.key 14 94
+
+1 exec> keyboard.key 1C 9C
+
+1 exec> getruntimeduration
+RunTimeDuration:20000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> keyboard.key 13 93
+
+1 exec> keyboard.key 18 98
+
+1 exec> keyboard.key 18 98
+
+1 exec> keyboard.key 14 94
+
+1 exec> keyboard.key 1C 9C
+
+1 exec> getruntimeduration
+RunTimeDuration:21000000
+
+1 exec> runtimeduration 1000000
+
+1 exec> go
+
+1 exec> shell.save /home/asbhopal/Downloads/installation_dir/cotson/data/1p-xenv0.bsd
+info: Saving device #0 "AMD 8th Generation Integrated Northbridge"
+info: Saving device #1 "Dimm Bank"
+info: Saving device #2 "AMD-8111 I/O Hub"
+info: Saving device #3 "Memory Device"
+info: Saving device #4 "Winbond W83627HF SIO"
+info: Saving device #5 "SMB Hub Device"
+info: Saving device #6 "PCI Bus"
+info: Saving device #7 "Debugger"
+info: Saving device #8 "AweSim Processor"
+info: Saving device #9 "AMD-8132 PCI-X Controller"
+info: Saving device #10 "PCI Bus"
+info: Saving device #11 "PCI Bus"
+info: Saving device #12 "PCA9548 Device"
+info: Saving device #13 "AT24C Device"
+info: Saving device #14 "USB JumpDrive"
+info: Saving device #15 "Emerald Graphics"
+info: Saving device #16 "Intel(R) Pro/1000 MT/PT Desktop Network Adapter"
+BSD Save completed!
+
+1 exec> quit

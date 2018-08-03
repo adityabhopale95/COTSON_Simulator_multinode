@@ -1,0 +1,121 @@
+runid="twohet"
+tmpdir=os.getenv("PWD")
+copy_files_prefix=runid.."."
+debug=2
+control_script_file='twohet-ctrl'
+clean_sandbox=false
+
+-- DBFILE="/tmp/twohet.db"
+DESC="Two nodes (heterogeneous) example"
+EXP=10
+
+cluster_nodes=2
+options = {
+	sampler={ type="no_timing", quantum="100k" },
+	heartbeat={ type="file_last" },
+	heartbeat1={ type="sqlite", dbfile=DBFILE, experiment_id=EXP, experiment_description=DESC },
+	network_cpuid=true, -- send cpuid 'tracer' commands to all nodes
+}
+
+-- Poor man's multicast disambiguation (pid-based)
+MCAST= (cotson_pid % 200) + 1
+mediator = {
+	verbose=1,
+    multicast_ip="239.200.1."..MCAST,
+    quantum_min=10,
+    quantum_max=1000,
+	heartbeat_interval=10000, -- 10msec
+	heartbeat={ type="file_last" },
+	heartbeat1={ type="sqlite", dbfile=DBFILE, experiment_id=EXP },
+	timer={ type="simple", max_bandwidth=1000, latency=12, cfactor=10 },
+        tracefile=NTFILE, -- dump a trace
+	slirp=false, -- don't NAT with the external world
+}
+
+-- The 'NODE' global variable is instantiated by the cotson harness:
+-- we can use it to set different node parameters, if the cluster
+-- is not homogeneous. In the following example, n1 is a 1-core node 
+-- and n2 is a 4-core node.
+
+if NODE == 1 then
+  ------------------------------------------------
+  -- CONFIGURATION FOR NODE == 1
+  ------------------------------------------------
+  simnow.commands=function()
+	use_bsd('1p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+	set_network()
+	execute('ping.sh')
+	subscribe_result('/tmp/ping.log')
+  end
+
+  function build()
+	i=0 while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+	i=0 while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+	mem=Memory{ name="main", latency=1 } 
+	i=0 while i < cpus() do
+	    cpu=get_cpu(i)
+	    cpu:timer{ name='cpu'..i, type="timer0" }
+	    cpu:instruction_cache(mem)
+	    cpu:data_cache(mem)
+	    cpu:instruction_tlb(mem)
+	    cpu:data_tlb(mem)
+		i=i+1
+	end
+  end
+else
+  ------------------------------------------------
+  -- CONFIGURATION FOR NODE != 1
+  ------------------------------------------------
+  simnow.commands=function()
+	use_bsd('4p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+	set_network()
+	execute('ping.sh')
+	subscribe_result('/tmp/ping.log')
+  end
+
+  function build()
+	i=0 while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+	i=0 while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+	mem=Memory{ name="main", latency=1 } 
+	i=0 while i < cpus() do
+	    cpu=get_cpu(i)
+	    cpu:timer{ name='cpu'..i, type="timer0" }
+	    cpu:instruction_cache(mem)
+	    cpu:data_cache(mem)
+	    cpu:instruction_tlb(mem)
+	    cpu:data_tlb(mem)
+		i=i+1
+	end
+  end
+end
+
+--- This is for remote execution (with daemons). Edit as appropriate
+-- tmpdir="/tmp"
+-- scheduler = {
+	-- policy='load-balance', 
+	-- policy='round-robin', 
+	-- hosts = { 'hpl-bro10.esp.hp.com:4040', 'hpl-bro05.esp.hp.com:4040' }
+-- } 
+
+-- vim:ft=lua
+

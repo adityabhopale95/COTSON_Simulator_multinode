@@ -1,0 +1,507 @@
+#!/usr/bin/perl
+## (C) Copyright 2006-2009 Hewlett-Packard Development Company, L.P.
+## $Id$
+use DBI;
+use strict;
+
+$SIG{INT} = sub { die("caught ctrl-c, goodbye\n"); };
+
+my %BUILTINS = ( 
+    ipc     => "~'cpu.*\.instcount'",
+    idle    => "~'cpu.*\.idlecount'",
+    packets => "~'nic.*\.pack_read'",
+    bytes   => "~'nic.*\.bytes_read'",
+
+    l1miss => "L1MPKI",
+    l2miss => "L2MPKI",
+    t1miss => "T1MPKI",
+    t2miss => "T2MPKI",
+);
+my $builtins = join('|', (sort keys %BUILTINS));
+
+my $refresh = 30;
+my $qms = 10;
+my $qms2 = 10;
+my $met1match = $BUILTINS{ipc};
+my $met2match;
+my $host=$ARGV[0] or usage($0); shift;
+my $exp=$ARGV[0] or usage($0); shift;
+my $png;
+my $geometry = "800x300+0+0";
+my $pngsz = "1024,768";
+my $FREQ = "2.2"; # GHz
+my $nnodes = 0;
+my $mintime = 0.0;
+my $maxtime;
+my $nplot1 = 1;
+my $nplot2 = 1;
+my $scale = 1.0;
+my $scale2 = 1.0;
+my $diff = 0;
+my $accum = 0;
+my $verbose = 0;
+my $inverse = 0;
+my $x11term = 0;
+my $droptable = 0;
+while ($#ARGV >= 0) {
+    my $arg = $ARGV[0];
+    if ($arg eq "-a")  { $accum = 1; }
+    elsif ($arg eq "-d")  { $diff = 1; }
+    elsif ($arg eq "-dt") { $droptable = 1; }
+    elsif ($arg eq "-f")  { shift; $FREQ = $ARGV[0]; }
+    elsif ($arg eq "-g")  { shift; $qms = $ARGV[0]; }
+    elsif ($arg eq "-g2") { shift; $qms2 = $ARGV[0]; }
+    elsif ($arg eq "-i")  { $inverse = 1; }
+    elsif ($arg eq "-m")  { shift; $met1match = "$ARGV[0]"; }
+    elsif ($arg eq "-m2") { shift; $met2match = "$ARGV[0]"; }
+    elsif ($arg eq "-mm") { shift; $met1match = $BUILTINS{$ARGV[0]} or usage($0); }
+    elsif ($arg eq "-mm2"){ shift; $met2match = $BUILTINS{$ARGV[0]} or usage($0); }
+    elsif ($arg eq "-nn") { $nnodes = 1; }
+    elsif ($arg eq "-np") { shift; $nplot1 = $ARGV[0]; }
+    elsif ($arg eq "-np2"){ shift; $nplot2 = $ARGV[0]; }
+    elsif ($arg eq "-p")  { shift; $png = $ARGV[0]; }
+    elsif ($arg eq "-ps") { shift; $pngsz = $ARGV[0]; }
+    elsif ($arg eq "-r")  { shift; $refresh = $ARGV[0]; }
+    elsif ($arg eq "-s")  { shift; $scale = $ARGV[0]; }
+    elsif ($arg eq "-s2") { shift; $scale2 = $ARGV[0]; }
+    elsif ($arg eq "-sz") { shift; $geometry = $ARGV[0]; }
+    elsif ($arg eq "-t")  { shift; ($mintime,$maxtime) = interval($ARGV[0]); }
+    elsif ($arg eq "-v")  { $verbose = 1; }
+    elsif ($arg eq "-x11") { $x11term = 1; }
+    else { usage($0); }
+    shift;
+}
+
+die("ERROR: Granularity must be > 0\n") if ($qms <= 0 or $qms2 <= 0);
+
+my $maxnanos = $mintime;
+my $dbh;
+if ($host =~ s/file://) {
+    ## sqlite
+    print "Using SQLite connector\n";
+    $dbh = DBI->connect("dbi:SQLite:dbname=$host;");
+    $dbh->func('regexp',2,sub{my($r,$s)=@_;return $s=~/$r/;},'create_function'); 
+    $met1match=~s/~/REGEXP /;
+    $met2match=~s/~/REGEXP /;
+}
+else {
+    print "Using PostgreSQL connector\n";
+    my $username="cotson";
+    my $dbname="cotson";
+    $dbh = DBI->connect("dbi:Pg:dbname=$dbname;host=$host","$username");
+}
+
+my $expdesc = get_description($dbh);
+my $FREQ = get_frequency($dbh,$FREQ);
+update_metric_names($dbh);
+
+## Metrics query
+my %MET1;
+my %MET2;
+my %NODES1;
+my %NODES2;
+my %TIMES;
+if ($refresh gt 0) {
+    $x11term=1;
+	$droptable=1;
+}
+print "refresh rate is $refresh s\n";
+print "granularity is is $qms ms\n";
+print "ctrl-c to stop\n";
+my $q = $qms * 1e6;
+my $q2 = $qms2 * 1e6;
+do {
+    print "========================================\n";
+    print "start from time ",$maxnanos*1e-6," ms\n";
+
+    my $tmax = 0;
+    if ($met1match eq 'L1MPKI') {
+	    my $sth = miss_per_kinst($exp,"L1",$maxnanos,$maxtime);
+        my $tmx = fillmetric($sth,$mintime,\%MET1,\%NODES1,$q);
+        $tmax = $tmx > $tmax ? $tmx : $tmax;
+		$sth->finish();
+	}
+    elsif ($met1match eq 'L2MPKI') {
+	    my $sth = miss_per_kinst($exp,"L2",$maxnanos,$maxtime);
+        my $tmx = fillmetric($sth,$mintime,\%MET1,\%NODES1,$q);
+        $tmax = $tmx > $tmax ? $tmx : $tmax;
+		$sth->finish();
+	}
+    elsif ($met1match eq 'T1MPKI') {
+	    my $sth = miss_per_kinst($exp,"T1",$maxnanos,$maxtime);
+        my $tmx = fillmetric($sth,$mintime,\%MET1,\%NODES1,$q);
+        $tmax = $tmx > $tmax ? $tmx : $tmax;
+		$sth->finish();
+	}
+    elsif ($met1match eq 'T2MPKI') {
+	    my $sth = miss_per_kinst($exp,"T2",$maxnanos,$maxtime);
+        my $tmx = fillmetric($sth,$mintime,\%MET1,\%NODES1,$q);
+        $tmax = $tmx > $tmax ? $tmx : $tmax;
+		$sth->finish();
+	}
+    elsif ($met1match) {
+        my $query = metquery($exp,$met1match);
+		my $sth = execute_query($query,$exp,$met1match,$maxnanos,$maxtime);
+        my $tmx = fillmetric($sth,$mintime,\%MET1,\%NODES1,$q);
+        $tmax = $tmx > $tmax ? $tmx : $tmax;
+		$sth->finish();
+    }
+
+    if ($met2match) {
+        my $query = metquery($exp,$met2match);
+		my $sth = execute_query($query,$exp,$met2match,$maxnanos,$maxtime);
+        my $tmx = fillmetric($sth,$mintime,\%MET2,\%NODES2,$q2);
+        $tmax = $tmx > $tmax ? $tmx : $tmax;
+		$sth->finish();
+    }
+
+    if ($tmax > $maxnanos) {
+        $maxnanos = $tmax;
+        printmetric("exp-$exp.dat",\%MET1,\%NODES1,$scale);
+        printmetric("exp2-$exp.dat",\%MET2,\%NODES2,$scale2) if ($met2match);
+
+        ## print gnuplot file
+        open FH, ">exp-$exp.gp";
+        if ($png) {
+            print FH "set terminal png giant notransparent size $pngsz\n";
+            print FH "set output '$png'\n";
+        }
+        else {
+			if ($x11term) { print FH "set terminal x11 \n"; } else { print FH "set terminal wxt \n" };
+        }
+        my $opts = $accum ? "(cumulative)" : "";
+        $opts .= $diff ? "(differential)" : "";
+        print FH "set title \"$expdesc - $met1match - $met2match - $opts\"\n";
+        print FH "set grid\n";
+        printf FH "set xrange [%f:*]\n", $mintime*1e-6;
+        print FH "set yrange [0:*]\n";
+        print FH "set y2tics\n" if $met2match;
+        print FH "set ytics\n";
+        print FH "fx_x1y1(x)=x\n";
+        print FH "fx_x1y2(x)=x\n" if $met2match;
+
+        if ($inverse) {
+            print FH "fy_x1y1(y)=1/y\n";
+            print FH "fy_x1y2(y)=1/y\n" if $met2match;
+        }
+        else {
+            print FH "fy_x1y1(y)=y\n";
+            print FH "fy_x1y2(y)=y\n" if $met2match;
+        }
+        print FH "plot \\\n";
+        plotmetric(*FH,"exp-$exp.dat", \%NODES1,"x1y1",$nplot1,$nnodes);
+        plotmetric(*FH,"exp2-$exp.dat",\%NODES2,"x1y2",$nplot2,$nnodes) if $met2match;
+        print FH "     0 notitle\n";
+        print FH "pause ",$refresh+1,"\n" if (!$png and $refresh > 0);
+        # print FH "pause -1\n" if (!$png and !$refresh);
+        close FH;
+    }
+    if ($tmax) {
+        my $rr = (!$png && $refresh > 0);
+        print "start gnuplot\n";
+        system("gnuplot "
+               . ($rr?"":"-persist ") 
+               . "-geometry $geometry "
+               . "exp-$exp.gp".($rr?"&":""));
+    }
+    else {
+        print "no available experiment data\n";
+    }
+    sleep($refresh);
+}
+while($refresh > 0);
+
+$dbh->disconnect();
+exit(0);
+
+#######################################################################################
+sub usage 
+{
+    die "
+Usage: $0 host experiment_id  [options]
+    Options:
+          [-a]                    cumulative metric (not instantaneous per heartbeat)
+          [-d]                    differential metric per heartbeat
+          [-f freq]               clock frequencey in GHz, normally not needed
+          [-g granularity]        granularity (in ms)
+          [-i ]                   invert metrics (i.e., plot 1/y)
+          [-m metricmatch]        sql expression to match metric name (e.g. \"~'cpu[0-7]\.instcount'\")
+          [-mm builtin-metric]    builtin metric one of {$builtins}
+          [-nn]                   plot a line at the number of nodes
+          [-np n]                 plot a line every np
+          [-p png]                produce a png
+          [-ps pngsize(x,y)]      pagesize for png
+          [-r refresh_rate]       refresh (in s)
+          [-s scale]              scale factor for y values
+          [-sz geometry]          window geometry for X11 terminal
+          [-t mintime]            start time (in ms)
+          [-v]                    verbose
+    \n";
+}
+
+## Exp description
+sub get_description 
+{
+    my $dbh = shift;
+    my $query = "SELECT description from experiments where experiment_id='$exp';";
+    my $h = $dbh->prepare($query);
+    my $v = $h->execute();
+    my $desc = ($h->fetchrow_array())[0] if ($v==0);
+    print "EXPERIMENT[$exp] = $desc\n";
+    $h->finish();
+    return $desc;
+}
+
+## Frequency
+sub get_frequency 
+{
+    my $dbh = shift;
+    my $f = shift;
+    my $query = "SELECT value FROM metrics
+             WHERE metric_id IN (SELECT metric_id FROM metric_names WHERE name='cycles_per_usec')
+             AND heartbeat_id IN (SELECT heartbeat_id FROM heartbeats WHERE machine_id > 0 AND experiment_id=$exp LIMIT 1);";
+    my $h = $dbh->prepare($query);
+    my $v = $h->execute();
+    $f = (($h->fetchrow_array())[0])/1000.0 if ($v==0);
+    print "FREQUENCY = $f GHz\n";
+    $h->finish();
+    return $f;
+}
+
+sub qtable
+{
+    my $exp = shift;
+    my $mm = shift;
+	my $table = 
+	my $table = "exp$exp-$mm"; 
+	$table =~ s/[^a-zA-Z0-9\-]//g; 
+	$table =~ s/REGEXP//g; 
+	$table =~ s/LIKE//g;
+	return $table;
+}
+
+sub miss_per_kinst
+{
+    my $exp = shift;
+    my $what = shift;
+    my $t0 = shift;
+    my $t1 = shift;
+
+	my $m2 = "LIKE 'cpu%.timer.instructions'";
+    my $q2 = metquery($exp,$m2);
+	my $sth2 = execute_query($q2,$exp,$m2,$t0,$t1);
+    $sth2->finish();
+
+	my ($m1r,$m1w);
+	if ($what eq "L1") {
+	    $m1r = "LIKE 'cpu%.timer.dcache.read_miss'";
+	    $m1w = "LIKE 'cpu%.timer.dcache.write_miss'";
+	} elsif ($what eq "L2") {
+	    $m1r = "LIKE 'cpu%.timer.dcache.l2cache.read_miss'";
+	    $m1w = "LIKE 'cpu%.timer.dcache.l2cache.write_miss'";
+
+	} elsif ($what eq "T1") {
+	    $m1r = "LIKE 'cpu%.timer.dtlb.read_miss'";
+	} elsif ($what eq "T2") {
+	    $m1r = "LIKE 'cpu%.timer.dtlb.l2tlb.read_miss'";
+    } else { die("ERROR: unknown metric in miss_per_kinst ($what)"); }
+
+    my $q1r = metquery($exp,$m1r);
+	my $sth1r = execute_query($q1r,$exp,$m1r,$t0,$t1);
+    $sth1r->finish();
+
+	my $t1r = qtable($exp,$m1r);
+	if ($m1w) {
+        my $q1w = metquery($exp,$m1w);
+	    my $sth1w = execute_query($q1w,$exp,$m1w,$t0,$t1);
+        $sth1w->finish();
+
+	    my $t1w = qtable($exp,$m1w);
+	    my $q3 = "SELECT t2.machine_id,t2.heartbeat_id,t2.nanos,t2.cpu,t2.name,((t1r.value+t1w.value)*1000)/t2.value 
+	              FROM '$t1r' as t1r, '$t1w' as t1w, 'exp1-cputimerinstructions' as t2
+			      WHERE t1r.heartbeat_id=t2.heartbeat_id AND t1r.machine_id=t2.machine_id AND t1r.cpu=t2.cpu
+			      AND   t1w.heartbeat_id=t2.heartbeat_id AND t1w.machine_id=t2.machine_id AND t1w.cpu=t2.cpu";
+	    my $sth3 = execute_query($q3,$exp,$what."misspki",$t0,$t1);
+	    return $sth3;
+	}
+	else {
+	    my $q3 = "SELECT t2.machine_id,t2.heartbeat_id,t2.nanos,t2.cpu,t2.name,(t1r.value*1000)/t2.value 
+	              FROM '$t1r' as t1r, 'exp1-cputimerinstructions' as t2
+			      WHERE t1r.heartbeat_id=t2.heartbeat_id AND t1r.machine_id=t2.machine_id AND t1r.cpu=t2.cpu";
+	    my $sth3 = execute_query($q3,$exp,$what."misspki",$t0,$t1);
+	    return $sth3;
+	}
+}
+
+sub execute_query
+{
+	my $query = shift;
+	my $exp = shift;
+	my $mm = shift;
+	my $t0 = shift;
+	my $t1 = shift;
+
+	# save the query result in a table for faster future access
+	my $table = qtable($exp,$mm);
+	if ($droptable) {
+		print "Dropping table '$table'\n";
+        my $h = $dbh->prepare("DROP TABLE IF EXISTS '$table'");
+        $h->execute() or warn "Dropping table '$table' failed\n";
+	    $h->finish();
+	}
+	my $cquery = "CREATE TABLE IF NOT EXISTS '$table' AS $query";
+    my $sth = $dbh->prepare($cquery);
+    $sth->execute() or die "Query failed '$cquery'\n";
+	$sth->finish();
+    print "Query\n$cquery\ndone\n";
+
+	my $tq = ($t0 or $t1) ? (" WHERE " . ($t0 ? " $t0 <= nanos ": " 1") . ($t1 ? " AND nanos < $t1 " : "")) : "";
+	$cquery = "SELECT * FROM '$table' $tq";
+    $sth = $dbh->prepare($cquery);
+    $sth->execute() or die "Query failed '$query'\n";
+    print "Query\n$cquery\ndone\n";
+	return $sth;
+}
+
+sub metquery 
+{
+    my $exp = shift;
+    my $mm = shift;
+    my $t0 = shift;
+    my $t1 = shift;
+    $mm =~ s/>/\$/;
+    return "SELECT 
+	    machine_id, heartbeat_id, nanos, cpu, name, value
+        FROM heartbeats NATURAL JOIN metrics NATURAL JOIN metric_names
+        WHERE machine_id>0 AND experiment_id=$exp
+		AND metric_id in (SELECT metric_id from metric_names where name $mm)
+		ORDER BY nanos,cpu";
+}
+
+sub interval 
+{
+    my $t = shift;
+    my ($t0,$t1) = split(':',$t);
+    return ($t0 * 1e6, $t1 * 1e6);
+}
+
+sub fillmetric
+{
+    my $sth = shift;
+    my $mintime = shift;
+    my $met = shift;
+    my $nodes = shift;
+    my $qq = shift;
+
+    my $tmax = $mintime;
+    my $nr = 0;
+    while (my @row = $sth->fetchrow_array()) {
+        $nr++;
+        my $n   = $row[0]; # nodeid
+        my $hb  = $row[1]; # hb_id
+        my $t1  = $row[2]; # nanos
+        my $cpu = $row[3]; # cpu
+        my $m   = $row[4]; # metric name
+        my $x1  = $row[5]; # metric value
+        my $ncpu = sprintf("%03d:%02d",$n,$cpu);
+        my ($t0,$x0) = $nodes->{$ncpu} ? @{$nodes->{$ncpu}} : ($mintime,$x1);
+        my $dt = $t1 - $t0;
+        my $dx = $x1 - $x0;
+        my $ipc = $dt > 0 ? $dx/($dt*$FREQ) : 0;
+
+        if ($diff) { $dx = $ipc = $x1; }
+        if ($accum) { $dx = $ipc = $x1/$t1; }
+
+        my $tx0 = int($t0/$qq);
+        my $tx1 = int($t1/$qq);
+        if ($tx1 > $tx0) {
+            print "[$ncpu] ($t1 $x1) ($dt, $dx) [$tx0 $tx1) $ipc\n" if $verbose;
+            for (my $tx=$tx0; $tx<$tx1; ++$tx) {
+                $met->{$tx}{$ncpu} = $ipc;
+                $TIMES{$tx} = 1;
+            }
+            $nodes->{$ncpu}=[$t1,$x1,$ipc];
+        }
+        $tmax = $t1 if ($t1 > $tmax);
+    }
+    print "$nr rows\n";
+    # fill tail
+    foreach my $ncpu (keys %{$nodes}) {
+        my ($t0,$x0,$ipc) = @{$nodes->{$ncpu}};
+        my $tx0 = int($t0/$qq);
+        my $tx1 = int($tmax/$qq);
+        for (my $tx=$tx0; $tx<$tx1; ++$tx) {
+            $met->{$tx}{$ncpu} = $ipc;
+            $TIMES{$tx} = 1;
+        }
+    }
+    return $tmax;
+}
+
+sub printmetric
+{
+    my $outfile = shift;
+    my $met = shift;
+    my $nodes = shift;
+    my $sc = shift;
+
+    open FH, ">$outfile";
+    my $lastrow = "";
+    my $tlast = 0;
+    foreach my $tx (sort {$a<=>$b} keys %TIMES) {
+        my $cx = 0;
+        my $row = "";
+        foreach my $ncpu (sort keys %{$nodes}) {
+            my $y = $met->{$tx}{$ncpu};
+            $cx += $y if $y;
+            $row .= sprintf "%g ", $cx * $sc;
+        }
+        my $t = $tx * $q * 1e-6; ## in ms
+        if ($row ne $lastrow) { print FH "$t $row\n"; $tlast = 0; }
+        else { $tlast = $t; }
+        $lastrow = $row;
+    }
+    print FH "$tlast $lastrow\n" if $tlast;
+    close FH;
+}
+
+sub plotmetric
+{
+    my $fh = shift;
+    my $data = shift;
+    my $nodes = shift;
+    my $axes = shift;
+    my $np = shift;
+    my $nnodes = shift;
+
+    my $nn = 0;
+    my $col = 2;
+    foreach my $ncpu (sort keys %{$nodes}) {
+        $nn++;
+        if (($nn % $np) == 0) {
+            print $fh "    '$data' using (fx_$axes(\$1)):(fy_$axes(\$$col)) with fsteps lw 1 notitle axes $axes,\\\n";
+        }
+        $col++;
+    }
+    print $fh "     $nn axes $axes notitle,\\\n" if ($nnodes);
+}
+
+sub update_metric_names
+{
+	my $dbh = shift;
+    my $h = $dbh->prepare("select cpu from metric_names where name='cpu0.instcount'");
+	if ($h and $h->execute() and ($h->fetchrow_array())[0] eq 0) {
+	    print "CPU in metric_names already updated\n";
+	}
+	else {
+		print "Create and update CPU in metric_names\n";
+        my $h1 = $dbh->prepare("alter table metric_names ADD cpu integer");
+        $h1->execute() or warn "Cannot add cpu column to metric_names\n";
+	    $h1->finish();
+
+        my $h2 = $dbh->prepare("update metric_names set cpu=substr(name,4,instr(name,'.')-4)");
+        $h2->execute() or warn "Cannot update cpu in metric_names\n";
+	    $h2->finish();
+	}
+	$h->finish() if $h;
+}

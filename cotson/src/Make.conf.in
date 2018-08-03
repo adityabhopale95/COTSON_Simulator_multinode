@@ -1,0 +1,45 @@
+SIMNOW_DIR = @simnow_dir@
+DATA_DIR = @data_dir@
+THREAD_LIBS = @thread_lib@
+CC = @cc@
+CXX = @cxx@
+PREFIX = @root@
+
+CP = /bin/cp -f
+RM = /bin/rm -rf
+AR = /usr/bin/ar r
+INSTALL = /usr/bin/install -s
+MAKE = make
+
+## Development (default)
+OPT = development
+OPTS = -fPIC -Wall -O2 -g $(DEFS) $(XOPTS)
+
+ifeq ("$(OPT)","debug")
+## Debug
+OPTS = -fPIC -Wall -O0 -g $(DEFS) $(XOPTS) -DINLINE='__attribute__((__used__)) inline'
+endif
+
+ifeq ("$(OPT)","release")
+## Release (optimized)
+OPTS = -fPIC -Wall -O3 -march=opteron -fno-stack-protector -fomit-frame-pointer \
+       -DNDEBUG $(DEFS) $(XOPTS)
+endif
+
+CFLAGS = $(OPTS) $(INCLUDE)
+CXXFLAGS = $(OPTS) $(INCLUDE) $(XXOPTS)
+
+.PHONY: clean distclean dep install always
+
+%.o: %.cpp
+	@echo "$< ==> $@" [$(OPT)]; \
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+%.o: %.c
+	@echo "$< ==> $@" [$(OPT)]; \
+	$(CC) $(CFLAGS) -c $< -o $@
+
+dep:
+	makedepend $(DEPINC) -Y -w80 $(SRCS)
+
+# vim:ft=make

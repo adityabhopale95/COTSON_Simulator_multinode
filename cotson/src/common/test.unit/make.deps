@@ -1,0 +1,3 @@
+test.unit/test_metric: test.unit/test_metric.o
+test.unit/test_options: test.unit/test_options.o cast.o options.o parameters.o uint64_t_hash.o units.o
+test.unit/test_tagged_metrics: test.unit/test_tagged_metrics.o tagged_metric.o

@@ -1,0 +1,16 @@
+-- this input file may be used to run a particular BSD + HDD
+-- SimNow machine via cotson without the need for an abaeterno.so
+
+one_node_script='functional'
+display=os.getenv("DISPLAY")
+
+-- change this to point to your bsd and hdd
+-- you can use absolute paths here or else
+-- placed the bsd and hdd in the data directory
+-- of this distribution
+simnow.commands=function()
+	use_bsd('1p-xenv0.bsd')
+	use_hdd('xenv0.img')
+	set_journal()
+end
+-- vim:ft=lua

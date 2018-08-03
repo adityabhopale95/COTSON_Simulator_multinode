@@ -1,0 +1,33 @@
+<%= start_content %>
+<p>
+  <b>Description:</b>
+  <%=h @simulation.description %>
+</p>
+
+<p>
+  <b>Lua:</b>
+  <%=h @simulation.lua %>
+</p>
+
+<p>
+  <b>Commands:</b>
+  <%=h @simulation.command %>
+</p>
+
+<% if @simulation.experiments.count > 0 then %>
+	<h3>Experiments</h3>
+	<table>
+		<tr>
+			<td>Ended</td>
+		</tr>
+		<% @simulation.experiments.each do |experiment| %>
+			<tr>
+				<td><%= experiment.ended_at %></td>
+			</tr>
+		<% end %>
+	</table>
+<% end %>
+
+<%= button_link_to 'Edit', edit_simulation_path(@simulation) %>
+<%= button_link_to 'Back', simulations_path %>
+<%= end_content %>

@@ -1,0 +1,30 @@
+<h1>Listing experiment_machines</h1>
+
+<table>
+  <tr>
+    <th>Experiment</th>
+    <th>Machine</th>
+    <th>Sandbox</th>
+    <th>Mediator</th>
+    <th>Server</th>
+    <th>Vnc port</th>
+  </tr>
+
+<% for experiment_machines in @experiment_machines %>
+  <tr>
+    <td><%=h experiment_machines.experiment_id %></td>
+    <td><%=h experiment_machines.machine %></td>
+    <td><%=h experiment_machines.sandbox_id %></td>
+    <td><%=h experiment_machines.mediator %></td>
+    <td><%=h experiment_machines.server %></td>
+    <td><%=h experiment_machines.vnc_port %></td>
+    <td><%= link_to 'Show', experiment_machines %></td>
+    <td><%= link_to 'Edit', edit_experiment_machines_path(experiment_machines) %></td>
+    <td><%= link_to 'Destroy', experiment_machines, :confirm => 'Are you sure?', :method => :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New experiment_machines', new_experiment_machines_path %>

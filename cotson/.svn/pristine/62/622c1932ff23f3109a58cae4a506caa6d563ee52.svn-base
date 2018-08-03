@@ -1,0 +1,203 @@
+Using PostgreSQL as a heartbeat module:
+
+If you want to store all your metrics in a database you can select the pgsql
+hearbeat module to do so. In this document we will describe how to configure
+the server to store the data and how to configure Cotson to use this server.
+
+@ Configuring the server:
+
+The following notes assume a Debian (testing) system where postgresql-8.3
+has been installed using the following command:
+
+aptitude install postgresql-8.3 
+
+The locations of the scripts will change in other systems or with different
+versions of postgresql but these changes should be small enough so that you can
+follow these instructions easily.
+
+The first thing to do after installing postgres is making sure it runs
+correctly, without errors. You can start/stop/restart postgres with the 
+following commands:
+
+/etc/init.d/postgresql-8.3 start
+/etc/init.d/postgresql-8.3 stop
+/etc/init.d/postgresql-8.3 restart
+
+The next thing to do is to allow our specified user to be able to connect to
+postgres.  Go into the configuration directory (in debian it is
+/etc/postgresql/8.3/main) and edit pg_hba.conf. Add these two lines just below
+the line that grants user postgres access to everything (if you put them at the
+end of the file, other lines will take precedence).
+
+local   cotson      cotson                            trust
+host    cotson      cotson      16.0.0.0/8            trust
+host    cotson      cotson      16.0.0.0/8            trust
+host    all         all         15.0.0.0/8            md5
+host    all         all         16.0.0.0/8            md5
+
+The second line allows all machines under network 16 to have access to this
+database. This definition allows all HP machines. Feel free to put something
+more restrictive if you please.
+
+Then edit postgres.conf and add the option:
+
+listen_addresses = '*'
+
+where appropriate. Restart postgres to enable these changes.
+
+In debian, only user postgres has access to everything in the database, so the
+next few commands have to be executed as this user. We are using sudo access
+(which either needs changes in /etc/sudoers or root access to work). These
+lines create a new database cotson and add a user with the same name with
+privileges over that database. 
+
+sudo -u postgres psql -d template1 -U postgres \
+	-c "CREATE USER cotson;"
+sudo -u postgres psql -d template1 -U postgres \
+	-c "CREATE DATABASE cotson;"
+sudo -u postgres psql -d template1 -U postgres \
+	-c "GRANT ALL PRIVILEGES ON DATABASE cotson TO cotson;"
+
+To check that you have access to this machine both locally and through the
+network, issue the following commands (a normal user should suffice):
+
+psql -U cotson cotson -l
+psql -h hpl-bro11.esp.hp.com -U cotson cotson -l
+
+Substitute the dns name for the name of the machine (or ip) in which you have
+installed postgres.
+
+Both should produce an output like this:
+
+        List of databases
+   Name    |  Owner   | Encoding 
+-----------+----------+----------
+ cotson    | postgres | LATIN9
+ postgres  | postgres | LATIN9
+ template0 | postgres | LATIN9
+ template1 | postgres | LATIN9
+(4 rows)
+
+If you see these lines, your database server is ready to go.
+
+@ Creating the database:
+
+Before using the experiments database you need to create it. The definition of
+the database is in file experiments_definition located in this same directory.
+By issuing the following command you can create it from scratch:
+
+psql -U cotson cotson -f experiments_definition
+
+You obviously need psql from the postgres distribution. Since you must have the
+postgres installed somewhere, this is not a very complicated hurdle. This
+command has to run in the same machine where the database server is running. If
+you want to run it from another machine, add the -h hostname parameters to
+indicate where the database is running.
+
+If you want to delete the whole database you can do so with the experiments_delete
+script, by running the following command:
+
+psql -U cotson cotson -f experiments_delete
+
+@ Using the heartbeat module:
+
+The heartbeat module can be selected with the pgsql type, which is part of the
+options table:
+
+options = { 
+	...
+	heartbeat={ type="pgsql", ... } 
+}
+
+There are other necessary parameters used by this module. The most important
+one is dbconn, which is part of the heartbeat table. This parameter is a string
+which must include the postgres connection parameters. Currently it is
+mandatory to include the host (even if it is the same host as where the
+database server is running), the database name and the database user. An
+example of this parameter is the following:
+
+	dbconn="host=16.23.52.32 dbname=cotson user=cotson",
+
+which points to hpl-bro32.esp.hp.com and uses the predefined database and user
+names.
+
+In order to differentiate data from different runs, there is the concept of
+experiment. Each experiment has a unique id (given serially by the database)
+and a free form text describing its purpose. The data from one experiment remains
+in the database and can not be written over for security. There are two ways to
+get a unique experiment id.
+
+1) You add the experiment_description parameter in the heartbeat table. The
+presence of this parameter means that you want to generate a new unique
+identifier for this run. This is good for simulations with just one node.
+A complete example of hearbeat table with this option is the following:
+
+heartbeat={ 
+	type="pgsql", 
+	dbconn="host=16.23.52.32 dbname=cotson user=cotson",
+   experiment_description="new standalone experiment" 
+}
+
+2) You get yourself a new unique id and pass it to all the nodes running in
+your simulation as the parameter experiment_id. If the simulation sees this
+parameter, it knows it is part of a complex experiment and will not try to get
+itself a unique identifier. Since this identifier is used by all the cotson
+instances running in the cluster, you need to identify each node. This is
+normally done with the network.mediator_nodeid parameter, which will be used to
+select among the different nodes. A complete example of hearbeat table with
+this option is the following:
+
+heartbeat={ 
+	type="pgsql", 
+	dbconn="host=16.23.52.32 dbname=cotson user=cotson",
+   experiment_id=16
+}
+
+There exists a small utility that allows you to generate a new experiment id
+(among other things), which is installed in the tools directory under the name
+pg_experiment. Its sources are in the repository, under the tools/experiments
+directory. Eventually this tool will have more functionality that helps
+accessing and presenting the data from the experiments, but the definite
+solution will be to use SQL for the most complicated stuff.
+
+In order to get a new experiment id you must issue the following command:
+    pg_experiment new hostname description
+
+@ Archiving experiments
+
+Occasionally, it is convenient to archive experiments by moving them away from the
+running server into a backend database. This helps reducing the contention with other
+running experiments as well as it accelerates offline analysis and visualization.
+
+The best way is to use the pg_dump and pg_restore postgres utilities. Assume that
+'simfarm' is the server with the live database and that 'archive' is the archive 
+server. All commands are executed in 'archive' although for very remote servers
+it might be more efficient to run them locally in 'simfarm', copy the dumpfile 
+manually and run the restore on 'archive'
+1. The first step is to replicate the database structure from 'simfarm' to 
+   'archive' by dumping and restoring the schema
+
+		## Dump schema only as sql
+   	    $ pg_dump -h simfarm -U cotson -s cotson > cotson-schema.sql
+
+		## Restore schema only (create the DB)
+	    $ psql -h archive -U cotson -f cotson-schema.sql
+
+2. Move the 'simfarm' database data. Note that if the 'archive' database is empty
+   we can simply run a 'restore'. When the 'archive' DB already contains data, it
+   is safer to restore the tables individually, ignoring possible errors
+
+		## Dump the data only (custom format, compressed)
+		$ pg_dump -h simfarm -U cotson -a -Fc -Z 9 cotson > exp-data.dump
+
+		## Restore the data only (order matters)
+		#!/bin/sh
+		for table in \
+		    experiments experiments_unique \
+		    metric_names metric_names_unique parameters \
+			heartbeats heartbeats_unique \
+			metrics \
+		; do
+		    pg_restore -h archive -U cotson -a -d cotson -t $table exp-data.dump
+        done
+

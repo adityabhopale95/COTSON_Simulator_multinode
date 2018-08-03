@@ -1,0 +1,33 @@
+<p>
+  <b>Experiment:</b>
+  <%=h @experiment_machines.experiment_id %>
+</p>
+
+<p>
+  <b>Machine:</b>
+  <%=h @experiment_machines.machine %>
+</p>
+
+<p>
+  <b>Sandbox:</b>
+  <%=h @experiment_machines.sandbox_id %>
+</p>
+
+<p>
+  <b>Mediator:</b>
+  <%=h @experiment_machines.mediator %>
+</p>
+
+<p>
+  <b>Server:</b>
+  <%=h @experiment_machines.server %>
+</p>
+
+<p>
+  <b>Vnc port:</b>
+  <%=h @experiment_machines.vnc_port %>
+</p>
+
+
+<%= link_to 'Edit', edit_experiment_machines_path(@experiment_machines) %> |
+<%= link_to 'Back', experiment_machines_path %>

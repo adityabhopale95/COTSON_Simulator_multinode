@@ -1,0 +1,30 @@
+#!/usr/bin/ruby -w
+# (C) Copyright 2009 Hewlett-Packard Development Company, L.P.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+# $Id: get_vnc_webport 6977 2009-12-09 16:18:35Z frb $
+
+$: << File.expand_path(File.dirname(__FILE__) + '/../share')
+
+require 'cotson'
+
+begin
+	if !Execute.runs_any?(DB['vnc_pid'],DB['rxvt_vnc_pid']) then
+		puts ""
+	else
+		puts "display_http=#{DB['display_http']}" if DB['display_http']
+		puts "rxvt_display_http=#{DB['rxvt_display_http']}" if DB['rxvt_display_http'] 
+	end
+	puts "display=#{DB['display']}" if DB['display'] 
+	puts "rxvt_display=#{DB['rxvt_display']}" if DB['rxvt_display'] 
+rescue Exception => e
+	finish e
+end

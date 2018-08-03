@@ -1,0 +1,22 @@
+Memory injection was called for the file /home/frb/h2/OPENSOURCE/cotson/data/test/trace0.gz
+Item size: 16
+Opening file /home/frb/h2/OPENSOURCE/cotson/data/test/trace0.gz
+Memory injection was called for the file /home/frb/h2/OPENSOURCE/cotson/data/test/trace1.gz
+Item size: 16
+Opening file /home/frb/h2/OPENSOURCE/cotson/data/test/trace1.gz
+Memory injection selected ... 
+END OF FILE: Reads: 6 writes: 5
+             Nanos from 0 to 0
+             Cycles from 10 to 530
+END OF FILE: Reads: 4 writes: 3
+             Nanos from 0 to 0
+             Cycles from 110 to 550
+ending process
+Reads: 6 writes: 5
+Reads: 4 writes: 3
+END OF TRACE: Reads: 6 writes: 5
+              Nanos from 0 to 0
+              Cycles from 10 to 530
+END OF TRACE: Reads: 4 writes: 3
+              Nanos from 0 to 0
+              Cycles from 110 to 550

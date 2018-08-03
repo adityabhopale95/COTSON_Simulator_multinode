@@ -1,0 +1,9 @@
+# H$:images.list v0.1.0
+# This file contains a list of installable HDD COTSon images and reset.bsd
+
+# NAME VERSION TIME_TO_SHELL URL LOCAL_PATH MD5SUM OTHER
+
+karmic64 9.04 18 https://download.axiom-project.eu/ /opt/cotson/ 59f844d9c84c02806a9a5964db98a558 NIL
+trusty-axmv3 14.04 20 https://download.axiom-project.eu/ /opt/cotson/ 926dcafb6c74210e377605a064c8aa08 NIL 
+xenv0 16.04 20 https://download.axiom-project.eu/ /opt/cotson/ 36452b52896eed28f9478b72a1a6fad7 NIL 
+xenv1 16.04 20 https://download.axiom-project.eu/ /opt/cotson/ 8ea3e2066da9fda5dfa127b1d4e361c5 NIL 

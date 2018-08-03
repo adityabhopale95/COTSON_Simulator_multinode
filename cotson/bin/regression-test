@@ -1,0 +1,52 @@
+#!/usr/bin/ruby -w
+# (C) Copyright 2009 Hewlett-Packard Development Company, L.P.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+# $Id: regression-test 6977 2009-12-09 16:18:35Z frb $
+
+$: << File.expand_path(File.dirname(__FILE__) + '/../share')
+
+require 'cotson'
+
+errors=0
+begin
+	xtest=nil
+	tests,argv=RegressionTest.find_all(ARGV)
+	raise CotsonError.new(:RegressionTest, :arguments=>ARGV.join(' '), :tests => tests, :argv => argv) if tests.empty?
+
+	tests.each do |test|
+		xtest = test
+
+		puts "testing #{test}"
+	    $stdout.flush
+
+		if test === 'injector' then
+			success,reason,dir=injector_test(test,argv)
+		else
+			success,reason,dir=abaeterno_test(test,argv)
+		end
+
+		if success then
+			puts "passed #{test}"
+		else
+			puts "failed #{test} [#{dir}] ('#{reason}')"
+			errors+=1
+		end
+	    $stdout.flush
+	end
+	
+	puts "#{tests.length-errors}/#{tests.length} successful tests"
+
+rescue Exception => e
+	finish e, :tests=>tests, :test => xtest 
+end
+
+exit(errors)

@@ -1,0 +1,51 @@
+ACCURATE TRACER by Roberto Giorgi 2015-05-18
+--------------------------------------------
+
+The purpose of this additional tracer is to obtain more accurate output
+statistic also for small examples of codes used for testing (possibly with
+cycle-level accuracy).
+
+As a simple example, we would like to trace just one statement of C code:
+
+    res = a + b;
+
+The corresponding assembly code is:
+
+    mov	-0x8(%rbp),%eax
+    mov	-0xc(%rbp),%edx
+    add	%edx,%eax
+    mov	%eax,-0x4(%rbp)
+
+For the selection of this small trace is sufficent to write
+(the '1' in parenthisis means we refer to 'zone 1'):
+
+    azonestart(1);
+    res = a + b;
+    azonestop(1);
+
+The output statistics are:
+    cpu0.timer.instructions	4
+    cpu0.timer.cycles		617
+
+The 617 cycles account for:
+  - 300 cycles for the I-cache miss (and exec.) of the first 'mov'
+  - 300 cycles for the D-cache miss for loading the first operand
+  - 4 cycles for the I-cache hit (and exec.) of the second 'mov'
+  - 4 cycles for the D-cache hit for loading the second operand,
+  - 4 cycles for the I-cache hit (and exec.) of the 'add' operation
+  - 4 cycles for the I-cache hit (and exec.) of the destination 'mov'
+  - 1 cycle for the D-cache hit for storing the result
+
+
+---------------------------------------------------
+* HOW TO RUN THIS EXAMPLE
+  - just type 'make'
+
+* HOW TO CHECK IF THE PROGRAM EXECUTED CORRECTLY
+  - the output of the program is 'Result=3'
+
+* HOW TO READ THE OUPUT STATISTICS
+  - open the file node.1.atracer.log
+
+* HOW TO VERIFY THE ASSEMBLY
+  - objdump -d add | less

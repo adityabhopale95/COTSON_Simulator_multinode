@@ -1,0 +1,8 @@
+DROP TABLE metrics;
+DROP TABLE metric_names;
+DROP SEQUENCE metric_names_unique;
+DROP TABLE heartbeats;
+DROP SEQUENCE heartbeats_unique;
+DROP TABLE parameters;
+DROP TABLE experiments;
+DROP SEQUENCE experiments_unique;

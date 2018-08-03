@@ -1,0 +1,33 @@
+options.heartbeat={ type="file_last", logfile="/tmp/logfile.txt" }
+
+options.injection_type="memory"
+
+function build()
+
+ 	mem=Memory{ name="main", latency=0 } 
+
+    l2=Cache{ name="l2cache", size="512kB", line_size=16, latency=10, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+    t2=TLB{ name="l2tlb", page_size="4kB", entries=512, latency=80, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+
+	bus=Bus{ name="bus", protocol='MESI', latency=0, bandwidth=400, next=l2 } 
+
+	i=0
+	while i < 2 do
+                cpu=new_cpu(os.getenv('DATA_DIR')..'/test/uni.gz')
+    	cpu:timer{ name='cpu'..i, type="timer0" }
+
+	    ic=Cache{ name="icache"..i, size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    	dc=Cache{ name="dcache"..i, size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    	it=TLB{ name="itlb"..i, page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+    	dt=TLB{ name="dtlb"..i, page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+
+    	cpu:instruction_cache(ic)
+    	cpu:data_cache(dc)
+    	cpu:instruction_tlb(it)
+    	cpu:data_tlb(dt)
+
+	 	memory_inject(dc,os.getenv('DATA_DIR')..'/test/trace'..i..'.gz')
+	 	i=i+1
+	end
+end
+-- vim:ft=lua

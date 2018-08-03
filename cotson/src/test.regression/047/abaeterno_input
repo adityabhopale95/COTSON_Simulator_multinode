@@ -1,0 +1,52 @@
+options = {
+	max_nanos="1M",
+	sampler={ type="simple", quantum="100k" },
+	heartbeat={ type="file_last" },
+}
+
+simnow.commands=function()
+	-- for a longer example, see test.regression/001/abaeterno_input 
+	use_bsd('1p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+	send_keyboard('cd /home/user;./176.gcc.test.sh')
+end
+
+function build()
+	i=0
+	while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+
+	i=0
+	while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+
+	x=cpus()
+	if x ~= 1 then
+		error("This experiment only wants to handle 1 cpu")
+	end
+
+	cpu=get_cpu(0)
+	cpu:timer{ name='cpu0', type="timer0" }
+
+    mem=Memory{ name="mem", latency=0, timing="mainmem", nchannels=8, ndimms_per_channel=1, ndevices_per_dimm=16,page_size=1024, line_size=64, cmd_clk_multiplier=2, bank_clk_multiplier=2, t_RC=109, t_RAS=69, t_data_transfer=1 }
+    l2=Cache{ name="l2cache", size="16MB", write_policy="WB", line_size=64, latency=0, num_sets=16, miss_penalty=27, timing="l2", nbanks=8, nsubbanks_per_bank=1, page_size=64, clock_multiplier=2, t_RC=2, t_RAS=2, t_additional_hit_latency=3, write_policy="WB", write_allocate="true", next=mem }
+    t2=TLB{ name="l2tlb", page_size="4kB", entries=512, latency=80, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+
+    ic=Cache{ name="icache", size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    dc=Cache{ name="dcache", size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    it=TLB{ name="itlb", page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+    dt=TLB{ name="dtlb", page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+
+	cpu:instruction_cache(ic)
+	cpu:data_cache(dc)
+	cpu:instruction_tlb(it)
+	cpu:data_tlb(dt)
+end
+-- vim:ft=lua

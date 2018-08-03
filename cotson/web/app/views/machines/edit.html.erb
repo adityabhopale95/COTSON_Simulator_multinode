@@ -1,0 +1,27 @@
+<%= start_content %>
+	<h1>Editing machine</h1>
+	
+	<% form_for(@machine) do |f| %>
+	  <%= f.error_messages %>
+	
+	  <p>
+	    <%= f.label :host %><br />
+	    <%= f.text_field :host %>
+	  </p>
+	  <p>
+	    <%= f.label :port %><br />
+	    <%= f.text_field :port %>
+	  </p>
+	  <p>
+	    <%= f.label :active %><br />
+	    <%= f.check_box :active %>
+	  </p>
+	  <p>
+	    <%= f.submit "Update" %>
+	  </p>
+	<% end %>
+<%= end_content %>
+<%= start_corner %>
+	<%= button_link_to 'Show', @machine %> |
+	<%= button_link_to 'Back', machines_path %>
+<%= end_corner %>

@@ -1,0 +1,19 @@
+^heartbeat.logfile
+^Checking.*rc
+^Using image path
+^Opening 
+^1 exec> open
+^1 exec> ide:[0-9].image
+^MASTER drive Image file is now
+^ATA: Image
+^cpu0.valid_translation_bytes
+^cpu0.invalid_translation_bytes
+^cpu0.metadata_bytes
+^cpu0.other_exceptions
+^cpu0.timer.dcache.writeback
+^Known Device:
+^Device Library:
+print_unknown
+allow_unknown
+plain_invalidations
+nan$

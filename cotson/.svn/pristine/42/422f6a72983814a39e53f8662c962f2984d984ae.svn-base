@@ -1,0 +1,46 @@
+<%= start_content -%>
+	<h1>Listing Daemon Computers</h1>
+	<table>
+	  <tr>
+	    <th>Host</th>
+	    <th>Port</th>
+	    <th>Active</th>
+        <th>On line</th>
+        <th>Processors</th>
+        <th>Simulations</th>
+        <th>Free mem</th>
+        <th>Info</th>
+	  </tr>
+	
+	<% for machine in @machines %>
+	  <tr>
+	    <td><%=h machine.host %></td>
+	    <td><%=h machine.port %></td>
+	    <td><%=h machine.active %></td>
+        <td><%=h machine.online %></td>
+        <%if machine.online %>
+	        <td><%=h machine.info("Processors") %></td>
+    	    <td><%=h machine.info("Simulations") %></td>
+        	<td><%=h machine.info("MemFree") %></td>
+        	<td><%=h machine.info(:Info) %></td>
+       	<% else %>
+	        <td></td>
+    	    <td></td>
+        	<td></td>
+        	<td></td>
+        <% end %>
+	    <td><%= link_to 'Show', machine %></td>
+	    <td><%= link_to 'Edit', edit_machine_path(machine) %></td>
+	    <td><%= link_to 'Destroy', machine, :confirm => 'Are you sure?', :method => :delete %></td>
+	  </tr>
+	<% end %>
+	</table>
+<%= end_content -%>
+
+<%= start_corner -%>
+	<%= button_link_to 'New Daemon Computer', new_machine_path%>
+<%= end_corner -%>
+	  
+
+
+

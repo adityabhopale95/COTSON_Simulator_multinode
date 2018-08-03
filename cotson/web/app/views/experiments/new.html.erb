@@ -1,0 +1,22 @@
+<%= start_content %>
+	<h1>New experiment</h1>
+	
+	<% form_for(@experiment) do |f| %>
+	  <%= f.error_messages %>
+	
+	  <p>
+	    <%= f.label :simulation_id %><br />
+	    <%= f.collection_select :simulation_id, Simulation.find(:all), :id, :description %>
+	  </p>
+	  <p>
+	    Graphic support: <%= check_box "graphic", "value", :disabled => !@graphic_support %>
+	    <%= " Graphic database not connected: graphic support disabled." if !@graphic_support %>
+	  </p>
+	  <p>
+	    <%= f.submit "Run Simulation" %>
+	  </p>
+	<% end %>
+<%= end_content %>
+<%= start_corner %>
+	<%= button_link_to 'Back', experiments_path %>
+<%= end_corner %>

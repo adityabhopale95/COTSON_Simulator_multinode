@@ -1,0 +1,227 @@
+#!/usr/bin/ruby
+# (C) Copyright 2009 Hewlett-Packard Development Company, L.P.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+# $Id: cotson 6977 2009-12-09 16:18:35Z frb $
+
+$: << File.expand_path(File.dirname(__FILE__) + '/../share')
+
+require 'cotson'
+require 'fileutils'
+
+node_sandbox=[]
+med_sandbox=nil
+clean_sandbox=false
+output=[]
+control_script=nil
+
+ENV['RUBYOPT']="-W0"
+
+def sbname(opts,t)
+  return File.join(opts[:tmpdir],opts[:runid]+"-#{$$}#{t}")
+end
+
+trap("INT") { raise CotsonError.new(:CtrlC); }
+
+begin
+  if ARGV.size == 0 then
+    raise CotsonError.new(:CotsonScript)
+  end
+    
+  lua_defs=LuaDefinitions.new
+  lua_defs.instance_defaults :NODE => 1
+  opts=Options.new(lua_defs, :NODE => 1)
+
+##########################################################################
+### One node only
+##########################################################################
+  if(opts.one_node?)
+    opts.load :one_node_script, :data_dir, :display,
+      :bsd, :bsd_link,
+      :hdd, :hdd_link,
+      :vncviewer, :xterm, :screen, :Xvnc, :Xvnc_args, :Xvncwm,
+      :simnow_dir, :simnow_dir_link,
+      :abaeterno_so, :abaeterno_so_link,
+      :clean_sandbox, :screen, 
+      :copy_files, :copy_files_prefix,
+      :subscribe_result, :run_script
+    clean_sandbox=opts[:clean_sandbox]
+
+    opts.load :control_script_file #publish the cotson_pid
+debug "Empty control script #{opts[:control_script_file]}"
+    sb=Sandbox.new(lua_defs,opts,sbname(opts,''))
+    node_sandbox.push sb
+    sb.install :abaeterno_in, :simnow_pre, :simnow_dir,
+      :abaeterno_so, :run_sh
+    sb.run(opts[:one_node_script])
+
+  else
+    opts.load :cluster_nodes, 
+      :mediator_file, :mediator_link,
+      :clean_sandbox,
+      :subscribe_result,
+      :copy_files, :copy_files_prefix
+    clean_sandbox=opts[:clean_sandbox]
+
+##########################################################################
+### Multi-node: Using daemon service
+##########################################################################
+    if opts.scheduler?
+      require 'daemon_service'
+      require 'scheduler'
+
+      scheduler=SchedulerFactory.create_scheduler(lua_defs)
+
+      debug "using scheduler #{scheduler.get_policy}"
+      debug "using hosts #{scheduler.hosts.join(",")}"
+
+      debug "creating mediator" 
+      med_sandbox = DaemonServiceCall.new(scheduler.get_host(:mediator=>true))
+      med_sandbox.create_mediator("#{ARGV.join(' ')}", Dir.pwd)
+      
+      cluster_nodes=opts[:cluster_nodes].to_i
+      
+      debug "creating #{cluster_nodes} nodes" 
+      node_sandbox=[]
+      (1..cluster_nodes).each do |node| 
+        x = DaemonServiceCall.new(scheduler.get_host)
+        x.create_node(node, "#{ARGV.join(' ')}", Dir.pwd)
+        node_sandbox.push x
+      end
+      
+##########################################################################
+### Multi-node Using local host /scripts
+##########################################################################
+    else
+      debug "using local host"
+      cluster_nodes=opts[:cluster_nodes].to_i
+      med_sandbox=Sandbox.new(lua_defs,opts,sbname(opts,"-med"))
+      med_sandbox.install :mediator, :abaeterno_in
+
+      (1..cluster_nodes).each do |node|
+
+      lua_defs.instance_defaults :NODE => node, :TOTAL => cluster_nodes
+      nopts=Options.new(lua_defs, :NODE => node, :TOTAL => cluster_nodes)
+      nopts.load :data_dir, :display,
+          :bsd, :bsd_link,
+          :hdd, :hdd_link,
+          :vncviewer, :xterm, :screen, :Xvnc, :Xvnc_args, :Xvncwm, 
+          :simnow_dir, :simnow_dir_link,
+          :abaeterno_so, :abaeterno_so_link,
+          :user_script, :clean_sandbox, :node_config,
+          :subscribe_result
+
+      nsb=Sandbox.new(lua_defs,nopts,sbname(opts,"-node-#{node}"))
+      nsb.install :abaeterno_in, :simnow_pre_cluster, :simnow_dir,
+          :abaeterno_so, :user_script, :cluster_sh, :node_config
+
+      node_sandbox.push nsb
+      end
+    end
+    
+    if opts.control_script?
+      require 'control_script'
+      opts.load :control_script_file
+      debug "Generating control script #{opts[:control_script_file]}"
+      control_script=ControlScript.new
+      control_script.add(med_sandbox,true) if med_sandbox
+      node_sandbox.each {|ns| control_script.add(ns)}
+      control_script.save(opts[:control_script_file])
+    end
+      
+
+    debug "starting mediator" 
+    output << med_sandbox.mediator
+
+    debug "getting mediator configuration"
+    vals={}
+    names=%w{host control_port multicast_ip multicast_port quantum_max}
+    names.each do |x|
+      vals[x]=med_sandbox.get_mediator_value(x).chomp
+      debug "#{x} #{vals[x]}"  #RG
+    end
+
+    debug "setting mediator configuration into nodes" 
+    i=1 #RG
+    node_sandbox.each do |x|
+      vals.each do |y,z|
+        debug "#{i}: #{y} #{z}"  #RG
+        x.set_mediator_value(y,z) 
+      end
+      i+=1 #RG
+    end
+
+    i=1 #RG
+    node_sandbox.each do |x|
+      debug "starting node #{i}"  #RG
+      output << x.start_go
+      i+=1 #RG
+    end
+
+    debug_nnl("waiting ")
+    running=true
+    while running do
+      running=false
+      node_sandbox.each do |x|
+        status=x.status
+        debug_nnl(".")
+        if status==true
+          running=true
+          break
+        end
+      end
+      sleep(1)
+    end
+    debug ""
+
+    sleep(1)
+    node_sandbox.each do |x|
+      debug "stopping node" 
+      x.kill  
+    end
+
+    debug "stopping mediator" 
+    med_sandbox.kill 
+
+    extra_prefix=opts[:copy_files_prefix]
+    debug "copying mediator output to #{Dir.pwd} " 
+    med_sandbox.copy_files(:type => :output, 
+        :filter => opts[:copy_files],
+        :prefix => "#{extra_prefix}med.",
+        :destination => Dir.pwd)
+
+  end
+
+  i=1
+  node_sandbox.each do |x|
+    debug "copying node #{i} output to #{Dir.pwd} " 
+    x.copy_files(:type => :output, 
+      :filter => opts[:copy_files],
+      :prefix => "#{extra_prefix}node.#{i}.",
+      :destination => Dir.pwd)
+    i+=1
+  end
+
+rescue Exception => e
+  finish e, :med_sandbox => med_sandbox, :node_sandbox => node_sandbox, :output => output
+ensure
+  if clean_sandbox then
+    debug "cleaning sandboxes" 
+    node_sandbox.each { |x| x.clean }
+    med_sandbox.clean if med_sandbox
+    control_script.destroy if control_script
+  else
+    debug "killing sandboxes" 
+    node_sandbox.each { |x| x.kill }
+    med_sandbox.kill if med_sandbox
+  end
+end
+

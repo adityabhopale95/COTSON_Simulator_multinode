@@ -1,0 +1,26 @@
+<%= start_content %>
+<h1>New simulation</h1>
+
+<% form_for(@simulation) do |f| %>
+  <%= f.error_messages %>
+
+  <p>
+    <%= f.label :description %><br />
+    <%= f.text_field :description %>
+  </p>
+  <p>
+    <%= f.label :lua %><br />
+    <%= f.text_area :lua %>
+  </p>
+  <p>
+    <%= f.label :command %><br />
+    <%= f.text_area :command %>
+  </p>
+  <p>
+    <%= f.submit "Create" %>
+  </p>
+<% end %>
+<%= end_content %>
+<%= start_corner %>
+	<%= button_link_to 'Back', simulations_path %>
+<%= end_corner %>

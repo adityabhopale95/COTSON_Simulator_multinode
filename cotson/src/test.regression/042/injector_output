@@ -1,0 +1,13 @@
+Hybrid flash map with LRU strategy.
+Memory injection was called for the file /home/frb/h2/OPENSOURCE/cotson/data/test/memorytrace.tar.gz
+Item size: 64
+Opening file /home/frb/h2/OPENSOURCE/cotson/data/test/memorytrace.tar.gz
+Memory injection selected ... 
+END OF FILE: Reads: 17904 writes: 4921
+             Nanos from 12500 to 10000000
+             Cycles from 0 to 109369
+ending process
+Reads: 17904 writes: 4921
+END OF TRACE: Reads: 17904 writes: 4921
+              Nanos from 12500 to 10000000
+              Cycles from 0 to 109369

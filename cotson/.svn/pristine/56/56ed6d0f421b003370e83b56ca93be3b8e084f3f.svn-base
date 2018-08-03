@@ -1,0 +1,64 @@
+Design space for a cache:
+
+* organization: way, block size,...
+* write policy: WT/WB
+* write allocate/no allocate
+* inlcusive/not inclusive/exclusive
+* coherence protocol
+
+Assumptions:
+* Write-allocate
+* Inclusive
+
+Cache
+        - Storage
+
+Bus
+        - Contention model
+        - Protocol
+
+Protocol:       the protocol holds all coherency stuff (the old 
+                bus_...) It can be used by the Bus and the cache.
+                (how many protocols i can have in a system?)
+
+Contention model:
+                this is a queue to model contention in the bus.
+
+
+                Rd Hit          Rd Miss         Wr Hit          Wr Miss         WB
+WT cache        -               ->Ra            ->W             ->Wa            -               
+
+WB cache        -               ->Ra            -               ->Ra            W
+
+WT SMP cache    -               ->Ra            ->W             ->Wa            -
+
+WB SMP cache    -               ->Ra            RaX(st==S)      ->RaX           W                       
+                                (BusR)          (BusRX)         (BusRX)         
+---     
+Impl.(wbs)      -               read()          write(mt)       write(mt)       write(mt=0)
+Impl.(wb)       -               read()          -               read()          write(mt=0)
+Impl.(wt)       -               read()          write(mt)       read()          -
+...             -               read()          wp->readX()     wp->readX(X)    wp->write
+
+... add smth in read to say "exclusive". This should be the default
+
+Reads are implemented in the same way for every kind of caches. Writes must go thru the WritePolicy
+
+... make that every object has a property like "shared"
+
+Cache parameters:
+* way, size,..., write_policy, coherence protocol
+
+Files:
+
+cache_impl.h    :       CacheImpl
+protocol.h      :       Protocol
+bus.h           :       Bus
+mesi.h/cpp      :       MESI
+//moesi.h/cpp   :       MOESI
+//simple.h/cpp  :       Simple
+
+Protocol::MESI,MOESI,Simple
+Interface::Bus<Protocol>
+Interface::CacheImpl<...>
+

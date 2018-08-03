@@ -1,0 +1,86 @@
+open /home/asbhopal/Downloads/installation_dir/cotson/data/1p-xenv1-reset.bsd
+SetLogConsoleEnabled 1
+ide:0.image master ../data/xenv1.img
+ide:0.journal master on
+e1000.linkconnect down
+e1000.setmediatorhost off
+e1000.setmacaddress fa:cd:00:00:00:00
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+keyboard.key 1C 9C
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+getruntimeduration
+runtimeduration 1000000
+go
+keyboard.key 13 93
+keyboard.key 18 98
+keyboard.key 18 98
+keyboard.key 14 94
+keyboard.key 1C 9C
+getruntimeduration
+runtimeduration 1000000
+go
+keyboard.key 13 93
+keyboard.key 18 98
+keyboard.key 18 98
+keyboard.key 14 94
+keyboard.key 1C 9C
+getruntimeduration
+runtimeduration 1000000
+go
+shell.save /home/asbhopal/Downloads/installation_dir/cotson/data/1p-xenv1.bsd
+quit

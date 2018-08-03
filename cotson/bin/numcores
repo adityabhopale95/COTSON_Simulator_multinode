@@ -1,0 +1,6 @@
+#!/bin/bash
+# Simple utility to count the number of cores in BSD (in the commandline)
+for n in $*; do
+    np=`strings $n | egrep 'Opteron.*productfile' | wc -l`
+	echo "BSD $n: $np cores"
+done

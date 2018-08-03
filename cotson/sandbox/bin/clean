@@ -1,0 +1,31 @@
+#!/usr/bin/ruby -w
+# (C) Copyright 2009 Hewlett-Packard Development Company, L.P.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+# $Id: clean 6977 2009-12-09 16:18:35Z frb $
+
+$: << File.expand_path(File.dirname(__FILE__) + '/../share')
+
+require 'location'
+require 'execute'
+
+begin
+	Execute.run($here.bin('kill'))
+	FileUtils.rm_rf($here)
+rescue Exception => e
+	#This is the only file that does not call 'finish' function 
+	#from share/cotson.rb
+	#This happens because it might occur the nead to clean a
+	#faulty execution and, depending on when the fault occurs
+	#loading 'cotson' might generate another error
+	#that does not let the correct cleaning.
+	puts error_message e, values
+end

@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  simulation_id: 1
+  started_at: 2009-05-04
+  ended_at: 2009-05-04
+
+two:
+  simulation_id: 1
+  started_at: 2009-05-04
+  ended_at: 2009-05-04

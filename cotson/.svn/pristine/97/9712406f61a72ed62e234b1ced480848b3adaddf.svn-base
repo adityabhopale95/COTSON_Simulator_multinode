@@ -1,0 +1,187 @@
+(C) Copyright 2006-2010 Hewlett-Packard Development Company, L.P.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+=============================================================================
+QUICKSTART INSTRUCTIONS FOR LINUX
+=============================================================================
+1. Check that you are running one supported Linux release (e.g. Ubuntu 16.04)
+
+2. Download AMD SimNow (e.g., simnow-linux64-4.6.2pub.tar.gz ) from here:
+   http://developer.amd.com/tools-and-sdks/cpu-development/simnow-simulator/
+
+3. Build COTSon
+   ./configure && make release && make regression
+
+4. You are now ready to use COTSon: you can jump to point
+   "HOW TO GET MORE FAMILIAR WITH COTSon" below or
+   (if anythng above goes wrong) read the detailed instructions below
+
+=============================================================================
+To build COTSon
+=============================================================================
+
+1. Download the latest AMD's SimNow platform emulator for linux.
+   Visit http://developer.amd.com/cpu/simnow for details
+   Unpack simnow to your preferred location 
+   (for example /home/user/simnow-linux64-4.6.2pub)
+
+   *** The SimNow tested version for this COTSon release is "4.6.2pub" ***
+
+2. Run the toplevel 'configure' script with the simnow location
+    ./configure --simnow_dir /home/user/simnow-linux64-4.6.2pub
+
+   Note that this isn't a standard gnu 'configure', but a much simpler 
+   script.  Because it also downloads & installs (with apt-get) the 
+   required system components, you need to have 'sudo' privileges
+
+   You can also override the standard cc (--cc) and c++ (--cxx) compilers.
+   COTSon has been tested with up to gcc-4.4/g++-4.4
+
+3. Build everything (the core COTSon tools and sample BSDs in data/), e.g.
+    make release -j4   ## Build release (optimized) and 4 parallel jobs
+
+   After a successful build
+   - the COTSon binary (shared lib) is in
+        src/abaeterno/abaeterno.so
+   - the COTSon network binary (executable) is in
+        src/network/mediator
+   - the guest tools (installable tarball or .deb) are in
+        data/cotson-guest-tools.iso
+   - the test BSDs are in 
+        data/1p.bsd (1 CPU) 
+		data/4p.bsd (4 CPUs)
+	 the BSDs are both saved at the "root" bash prompt after 
+	 booting a 64b Ubuntu "karmic" minimal installation, so 
+	 that you can send keyboard commands to start benchmarks
+
+   If you then want to install the COTSon binaries to the default
+   sbin location (for example, for a distributed simulation), you can
+   then run
+       make install           ## Install binaries in default dir
+
+4. Run the regression test:
+       make regression
+
+   If everything is OK you should see a line which says that all tests
+   went well. If not, first try to **relaunch the test again** since
+   the reason of the failure may be only a temporary mismatch in the
+   statistics (since the execution of the full-system simulation 
+   may be -- like in reality -- not 100% deterministic)
+
+   Do not forget to update the regression tests in case you modify
+   any of the source files! To do so:
+       cd src
+       make regression        ## creates the test_@all.log file
+       make update-regression ## updates the tests with the local output
+       make regression        ## the 2nd time around you should get no errors
+
+5. (Optionally) You may also run 10 examples in non-interactive mode
+   in order to check that the installation was done properly and your machine
+   supports their execution:
+       make run_example_regression
+
+============================================================================
+HOW TO GET MORE FAMILIAR WITH COTSon
+============================================================================
+1. Have a look at the "COTSon USER GUIDE" in the doc directory.
+   You can follow the examples in the src directory that are illustrated
+   in the User Guide and also study the .in COTSon configuration files.
+
+2. Once you have studied a bit the guide, try also to run yourself 
+   the examples:
+
+       cd src/examples && make  or simply: make run_examples
+
+   Follow the makefile instructions and look at the output 
+   (the 'copy_files' directive will copy logfiles to the local directory))
+   A few of the examples may require some amount of babysitting to run.
+   The "twonodes" example is a simple 2-node ping in cluster mode.
+   The "sqlite" example shows how to dump (and read) metrics to a database.
+   The "tracer" example (in its own dir) shows guest/simulation interaction.
+
+3. If you want to store the results in a postgres or sqlite database, take 
+   a look at src/tools/pg_install and read the documentation how to
+   configure a database 'heartbeat'. There is also an example with sqlite in
+   src/examples/sqlite.in
+
+=============================================================================
+IMPORTANT SYSTEM REQUIREMENTS
+=============================================================================
+
+SimNow requires a large addressable virtual memory space. Ensure that
+vm.max_map_count is appropriately configured in /etc/sysctl.conf.
+You can check the value with
+    sysctl vm.max_map_count
+
+Here are some recommended values: 
+- for a large memory machine, 16GB and up
+    vm.max_map_count=16777216
+- for a moderate memory machine, 4-8GB
+    vm.max_map_count=1048576
+
+In addition, if you're running clustered simulations, it may be better
+to also tune for TCP/IP and add to /etc/sysctl.conf
+
+    net.core.rmem_default = 262144 
+    net.core.wmem_default = 262144 
+    net.core.rmem_max = 262144 
+    net.core.wmem_max = 262144
+    net.ipv4.tcp_rmem = 4096 87380 262144 
+    net.ipv4.tcp_wmem = 4096 87380 262144 
+    net.ipv4.tcp_sack = 0 
+    net.ipv4.tcp_timestamps = 0 
+    net.ipv4.ip_local_port_range = 1024 65000
+
+And while you're at it, you might also do these (optional, more
+appropriate for large memory machines)
+
+    kernel.shmall = 2097152 
+    kernel.shmmax = 2147483648 
+    kernel.shmmni = 4096 
+    kernel.sem = 250 32000 100 128 
+    fs.file-max = 3241615
+
+=============================================================================
+DIRECTORY STRUCTURE
+    bin/
+    daemon/
+    etc/
+    sandbox/
+    share/
+    web/
+        The control components (scripts, web interface, distribution)
+
+    sbin/
+        Installation dir for the system binaries (abaeterno.so, mediator, ...)
+
+    data/
+        Simulation data files (BSDs, guest hard disks, etc.)
+
+    src/abaeterno/
+        The core COTSon infrastructure: timers, samplers, simnow interface
+    src/common/
+        Common utilities (metrics, options, etc.) for abaeterno and network
+    src/disksim/
+        Modified disksim distribution for COTSon
+    src/distorm/
+        Modified distorm (x86 disassembler) for COTSon
+    src/examples/
+        Simple simulation examples
+    src/libluabind/
+        C++ binding for LUA (used for COTSon scripting)
+    src/network/
+        COTSon network mediator (for distributed synchronization)
+    src/slirp/
+        Modified slirp library (NAT access from guest) for COTSon
+    src/test.regression/
+        Simple regression tests
+    src/tools/
+        Tools to support simulation experiments
+

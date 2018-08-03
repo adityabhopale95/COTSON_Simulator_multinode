@@ -1,0 +1,22 @@
+options.heartbeat={ type="file_last" }
+
+function build()
+        cpu=new_cpu(os.getenv('DATA_DIR')..'/test/uni.gz')
+	cpu:timer{ name='cpu0', type="bandwidth", data_cache_ports=2, reorder_buffer_size=128 }
+
+	mem=Memory{ name="main", latency=150 } 
+
+    l2=Cache{ name="l2cache", size="512kB", line_size=16, latency=20, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+    t2=TLB{ name="l2tlb", page_size="4kB", entries=512, latency=80, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+
+    ic=Cache{ name="icache", size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    dc=Cache{ name="dcache", size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    it=TLB{ name="itlb", page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+    dt=TLB{ name="dtlb", page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+
+	cpu:instruction_cache(ic)
+	cpu:data_cache(dc)
+	cpu:instruction_tlb(it)
+	cpu:data_tlb(dt)
+end
+-- vim:ft=lua

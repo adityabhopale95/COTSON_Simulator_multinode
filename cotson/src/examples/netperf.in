@@ -1,0 +1,73 @@
+runid="np"
+tmpdir=os.getenv("PWD")
+-- data_dir="/home2/data/4.5.2pub"
+-- simnow_dir="/home/opt/cotson/tools/simnow/simnow-linux64-4.5.2pub"
+-- abaeterno_so="/home/frb/cotson/trunk/abaeterno/abaeterno.so"
+-- mediator_file="/home/frb/cotson/trunk/abaeterno/mediator"
+-- Xvncwm="twm -display "
+
+-- copy_files_prefix="log."..os.time().."."
+copy_files_prefix=runid.."."
+debug=true
+
+control_script_file='np-ctrl'
+-- clean_sandbox=false
+
+cluster_nodes=2
+options = {
+	sampler={ type="interval", functional="20M",warming="100k",simulation="100k" },
+	-- sampler={ type="no_timing", quantum="10M" },
+	heartbeat={type="sqlite", dbfile=DBFILE,experiment_id=1,experiment_description="netperf"},
+}
+
+-- Poor man's multicast disambiguation (pid-based)
+MCAST= (cotson_pid % 200) + 1
+mediator = {
+	heartbeat={ type="file_last" },
+	quantum_min=20,
+	quantum_max=2000,
+	slirp=false,
+    multicast_ip="239.200.1."..MCAST,
+}
+
+simnow.commands=function()
+	use_bsd('1p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+	set_network()
+	execute("netperf.sh "..NPDIR)
+	subscribe_result('/tmp/np.log')
+end
+
+function build()
+	i=0
+	while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+
+	i=0
+	while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+
+	x=cpus()
+	if x ~= 1 then
+		error("This experiment only wants to handle 1 cpu")
+	end
+
+	cpu=get_cpu(0)
+	cpu:timer{ name='cpu0', type="timer0" }
+	mem=Memory{ name="main", latency=1 } 
+
+	cpu:instruction_cache(mem)
+	cpu:data_cache(mem)
+	cpu:instruction_tlb(mem)
+	cpu:data_tlb(mem)
+end
+
+-- vim:ft=lua
+

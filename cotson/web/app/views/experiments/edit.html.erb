@@ -1,0 +1,27 @@
+<%= start_content %>
+	<h1>Editing experiment</h1>
+	
+	<% form_for(@experiment) do |f| %>
+	  <%= f.error_messages %>
+	
+	  <p>
+	    <%= f.label :simulation_id %><br />
+	    <%= f.collection_select :simulation_id, Simulation.find(:all), :id, :description %>
+	  </p>
+	  <p>
+	    <%= f.label :started_at %><br />
+	    <%= f.datetime_select :started_at %>
+	  </p>
+	  <p>
+	    <%= f.label :ended_at %><br />
+	    <%= f.datetime_select :ended_at %>
+	  </p>
+	  <p>
+	    <%= f.submit "Update" %>
+	  </p>
+	<% end %>
+<%=end_content %>
+<%=start_corner %>
+	<%= button_link_to 'Show', @experiment %> |
+	<%= button_link_to 'Back', experiments_path %>
+<%= end_corner %>

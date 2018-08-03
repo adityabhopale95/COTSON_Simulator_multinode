@@ -1,0 +1,95 @@
+<%= start_content %>
+	<h2>Simulation: <%=h @experiment.simulation.description %></h2>
+	<table >
+		<tr>
+			<td><b>Started at</b></td>
+			<td><b>Ended at</b></td>
+		</tr>
+		<tr>
+			<td><%=h @experiment.started_at %></td>
+			<td><%= @experiment.ended_at ? h(@experiment.ended_at) : '<b>Running</b>' %></td>
+		</tr>
+	</table>
+
+	<script type="text/javascript" src="/amchart/amline/swfobject.js"></script>
+	<div id="flashcontent">
+	</div>
+
+<%= end_content %>
+<%= start_corner %>
+	<div style="background: orange;border:1px solid black;">
+		<form id="searchForm" name="searchForm" method="get" onsubmit="return replaceContent()">
+			<select name="graphic_type" value="<%= @presets.first[0] -%>">
+				<% @presets.each do |k,v| -%>
+					<option value="<%= k -%>"><%= v -%></option>
+				<% end -%>
+			</select>
+			<br/>
+			Points:<input type="text" size="10" maxlength="6" name="points" value="100" align="right">
+			<input type="button" value="reload settings" onclick="reloadSettings();" />
+			<INPUT class="submitButton" type="submit" value="Go" title="Go">
+		</form>
+	</div>
+
+	<%= render :partial => "basic_corner" %>
+	
+<%= end_corner %>
+
+<script type="text/javascript">
+function replaceContent() 
+{
+	<% if @experiment != nil -%>
+		<%= "experiment_id = #{@experiment.id}" %>
+	<% else -%>
+		<%= "experiment_id = null" %>
+	<% end -%>
+	if(experiment_id == null)
+	{
+	  alert ("No experiment selected. Can not graphic it!")
+	  return false;
+	}
+	graphic = document.searchForm.graphic_type.value
+	points = document.searchForm.points.value
+//	alert ("Selected graphic: " + graphic + " points: " + points)
+	
+	data_url = "/experiments/" + experiment_id + "/graphic_data?graphic=" + graphic + "&points=" + points
+	
+//	alert ("Data URL: " + data_url)
+	var so = new SWFObject("/amchart/amline/amline.swf", "amline", "1000", "600", "8", "#FFFFFF");
+	//so.addVariable("path", "/amline/");
+//	so.addVariable("settings_file", encodeURIComponent("/amchart/amline/basic_settings.xml"));
+	so.addVariable("settings_file", encodeURIComponent("/amchart/amline/cotson_settings.xml"));
+	so.addVariable("data_file", encodeURIComponent(data_url));
+	so.addVariable("loading_settings", "LOADING SETTINGS");                                           // you can set custom "loading settings" text here
+	so.addVariable("loading_data", "LOADING DATA");                                                   // you can set custom "loading data" text here
+	so.addVariable("preloader_color", "#999999");
+	so.write("flashcontent");
+
+	flashMovie = document.getElementById("amline");
+    return false;
+}
+
+var flashMovie;
+
+function reloadSettings()
+{
+    if (flashMovie) 
+    {            
+	    flashMovie.reloadSettings();
+    }
+}
+
+function reload_data()
+{
+//	alert("reload called")
+	if (flashMovie)
+	{
+		flashMovie.reloadData();
+	}
+    setTimeout("reload_data()",5000);
+}
+
+<% if @experiment.ended_at == nil %>
+	setTimeout("reload_data()",1000);
+<% end %>
+</script>

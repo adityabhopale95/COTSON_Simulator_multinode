@@ -1,0 +1,75 @@
+# COTSon Tools
+
+`DOC VER: 0.0.1`
+
+### bootstrap.sh:
+
+Prepare the system with all needed packages. Need root permission for execute. 
+
+What it does in detail:
+- install all packages needed for building and running COTSon 
+- configure some system parameters
+- parsing the file repository image.list and generate the right directory in your system
+  for store all shared file like HDD images and BSDS. For example, in a default configuration,
+  bootstrap.sh generates the following directory:
+
+
+    /opt/cotson/images
+    /opt/cotson/dists
+    /opt/cotson/bsds
+    /opt/cotson/log
+
+- run add-image.sh script for download the default HDD image (karmic64) and reset.bsd
+- generates the bsds
+### add-image.sh
+Is an important utility for manage the COTSon HDD images. With this utility, is possible
+add new image on our system and generate the bsds.
+The list of the available images is contained in repository file: images.list
+Need root permission for execute.
+Some EXAMPLES:
+
+
+    user@axm0:~/cotson$ ./add-images.sh trusty-axmv3
+    user@axm0:~/cotson$ ./add-image.sh -l
+    * Image list in repository:
+    0. karmic64
+    1. trusty-axmv3
+
+    * Image list already downloaded:
+    0. karmic64.img
+    1. trusty-axmv3.img
+
+    * BSD ready:
+    0. 1p-karmic64.bsd
+    1. 1p-karmic64-reset.bsd
+    2. 1p-trusty-axmv3-boot
+    3. 1p-trusty-axmv3.bsd
+    4. 1p-trusty-axmv3-reset.bsd
+    5. 2p-trusty-axmv3-boot
+    6. 2p-trusty-axmv3.bsd
+    7. 2p-trusty-axmv3-reset.bsd
+    8. 4p-karmic64.bsd
+    9. 4p-karmic64-reset.bsd
+    10. 4p-trusty-axmv3-boot
+    11. 4p-trusty-axmv3.bsd
+    12. 4p-trusty-axmv3-reset.bsd
+
+### images.list
+The images.list file is a file where are defined the HDD images ready for COTSON.
+Here an example of content:
+
+
+    karmic64 9.04 18 https://download.axiom-project.eu/ /opt/cotson/ 59f844d9c84c02806a9a5964db98a558 NIL
+    trusty-axmv3 14.04 20 https://download.axiom-project.eu/ /opt/cotson/ 926dcafb6c74210e377605a064c8aa08 NIL 
+
+The parameters was divided by space:
+
+
+1. Name of distribution
+2. Version of distribution
+3. Time in seconds for generate the bsd
+4. Link to download the HDD images and reset.bsd
+5. path for generating the system directory for store HDD images and bsds
+6. MD5SUM of HDD image
+7. CUSTOM parameter
+

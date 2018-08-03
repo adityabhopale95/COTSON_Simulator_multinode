@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  sandbox: MyString
+  configuration: MyText
+  mediator: false
+
+two:
+  sandbox: MyString
+  configuration: MyText
+  mediator: false

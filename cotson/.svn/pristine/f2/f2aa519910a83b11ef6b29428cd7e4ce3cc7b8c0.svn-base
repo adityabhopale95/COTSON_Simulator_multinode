@@ -1,0 +1,53 @@
+options = {
+	max_nanos="1M",
+	sampler={ type="simple", quantum="100k" },
+	heartbeat={ type="file" },
+}
+
+simnow.commands=function()
+	-- for a longer example, see test.regression/001/abaeterno_input 
+	use_bsd('1p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+	send_keyboard('cd /home/user;./176.gcc.test.sh')
+end
+
+function build()
+	i=0
+	while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+
+	i=0
+	while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+
+	x=cpus()
+	if x ~= 1 then
+		error("This experiment only wants to handle 1 cpu")
+	end
+
+	cpu=get_cpu(0)
+	cpu:timer{ name='cpu0', type="timer0" }
+
+	mem=Memory{ name="main", latency=150  } 
+
+    l2=Cache{ name="l2cache", size="512kB", line_size=16, latency=20, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+    t2=TLB{ name="l2tlb", page_size="4kB", entries=512, latency=80, num_sets=4, next=mem, write_policy="WB", write_allocate="true" }
+
+    ic=Cache{ name="icache", size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    dc=Cache{ name="dcache", size="16kB", line_size=16, latency=0, num_sets=2, next=l2, write_policy="WT", write_allocate="false" }
+    it=TLB{ name="itlb", page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+    dt=TLB{ name="dtlb", page_size="4kB", entries=40, latency=0, num_sets=40, next=t2, write_policy="WT", write_allocate="false" }
+
+	cpu:instruction_cache(ic)
+	cpu:data_cache(dc)
+	cpu:instruction_tlb(it)
+	cpu:data_tlb(dt)
+end
+-- vim:ft=lua

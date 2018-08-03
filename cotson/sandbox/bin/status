@@ -1,0 +1,42 @@
+#!/usr/bin/ruby -w
+# (C) Copyright 2009 Hewlett-Packard Development Company, L.P.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+
+# $Id: status 6977 2009-12-09 16:18:35Z frb $
+
+$: << File.expand_path(File.dirname(__FILE__) + '/../share')
+
+require 'cotson'
+
+def check_for_pid(pid_name)
+	return "not running" if !DB[pid_name]
+	return "running" if Execute.runs_any?(DB[pid_name])
+	DB[pid_name]=nil
+	return "dead"
+end
+
+def check_print_exit(name,pid_name)
+	sta=check_for_pid(pid_name)
+	if sta != "not running" then
+		puts "#{name} #{sta}"
+		exit(sta == "running" ? 0 : -1)
+	end
+end	
+
+begin
+	check_print_exit('simnow','screen_pid')
+	check_print_exit('mediator','mediator_pid')
+	exit(-1)
+rescue SystemExit => e
+	exit(e.status)
+rescue Exception => e
+	finish e
+end

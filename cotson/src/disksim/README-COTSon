@@ -1,0 +1,21 @@
+This version of DiskSim 4.0 has been modified in order
+to be used with HP Labs COTSon. 
+
+The current directory has two patch files that 
+corresponds to the changes made in DiskSim to adapt it 
+to COTSon:
+
+- patch-64bits: Changes needed to compile and use DiskSim
+	version 4.0 in a 64-bit machine.
+
+- patch-cotson: Changes needed to create a library that can 
+	be linked into COTSon.
+	
+
+To apply the patches, download DiskSim 4.0 from 
+http://www.pdl.cmu.edu/DiskSim/, and execute:
+
+$ cd disksim-4.0
+$ patch -p1 < patch-64bits
+$ patch -p1 < patch-cotson
+

@@ -1,0 +1,52 @@
+CREATE SEQUENCE experiments_unique;
+CREATE TABLE experiments
+(
+	experiment_id  integer DEFAULT nextval('experiments_unique') NOT NULL,
+	description    text,
+	CONSTRAINT non_repeated_experiments PRIMARY KEY (experiment_id)
+);
+
+CREATE TABLE parameters
+(
+	experiment_id integer REFERENCES experiments ON DELETE CASCADE,
+	machine_id    integer NOT NULL, 
+	name          varchar(256) NOT NULL,
+	value         varchar(256) NOT NULL,
+	CONSTRAINT non_repeated_options UNIQUE(experiment_id,machine_id,name)
+);
+
+CREATE SEQUENCE heartbeats_unique;
+CREATE TABLE heartbeats
+(
+	heartbeat_id  integer DEFAULT nextval('heartbeats_unique') NOT NULL,
+	heartbeat_seq  integer NOT NULL,
+	machine_id    integer NOT NULL, 
+	experiment_id integer REFERENCES experiments ON DELETE CASCADE,
+	nanos         int8,
+	date          timestamp DEFAULT now(), 
+
+	CONSTRAINT non_repeated_heart_per_machine UNIQUE(heartbeat_seq,machine_id,experiment_id),
+	CONSTRAINT non_repeated_heart_ids PRIMARY KEY(heartbeat_id)
+);
+CREATE INDEX heartbeats_expid_idx ON heartbeats USING btree (experiment_id);
+CREATE INDEX heartbeats_nanos_idx ON heartbeats USING btree (nanos);
+
+CREATE SEQUENCE metric_names_unique;
+CREATE TABLE metric_names
+(
+	metric_id  integer DEFAULT nextval('metric_names_unique') NOT NULL,
+	name       varchar(256) NOT NULL,
+	CONSTRAINT non_repeated_metric_ids PRIMARY KEY(metric_id)
+);
+
+CREATE TABLE metrics
+(
+	heartbeat_id integer REFERENCES heartbeats ON DELETE CASCADE,
+	metric_id    integer REFERENCES metric_names ON DELETE CASCADE,
+	value        float8,
+	CONSTRAINT non_repeated_metric_per_heart UNIQUE(heartbeat_id,metric_id) 
+);
+CREATE INDEX metrics_metid_idx ON metrics USING btree (metric_id);
+
+INSERT INTO experiments(experiment_id, text) VALUES(1,'test');
+

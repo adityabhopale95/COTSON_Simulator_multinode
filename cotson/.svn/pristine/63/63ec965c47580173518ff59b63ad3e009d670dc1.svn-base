@@ -1,0 +1,265 @@
+diff -Naur disksim-4.0-64_bits/diskmodel/layout_g4_tools/Makefile disksim-4.0-cotson/diskmodel/layout_g4_tools/Makefile
+--- disksim-4.0-64_bits/diskmodel/layout_g4_tools/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/diskmodel/layout_g4_tools/Makefile	2008-12-19 12:15:28.000000000 +0100
+@@ -3,7 +3,7 @@
+ include .paths
+ 
+ 
+-CFLAGS = -g $(DISKSIM_CFLAGS) $(DISKMODEL_CFLAGS) $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) -Wall -Wno-unused
++CFLAGS = -O3 -fPIC $(DISKSIM_CFLAGS) $(DISKMODEL_CFLAGS) $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) -Wall -Wno-unused
+ 
+ LDFLAGS = $(DISKSIM_LDFLAGS)  $(MEMSMODEL_LDFLAGS) -L.. -ldiskmodel  $(LIBPARAM_LDFLAGS) $(LIBDDBG_LDFLAGS) -lm
+ 
+diff -Naur disksim-4.0-64_bits/diskmodel/Makefile disksim-4.0-cotson/diskmodel/Makefile
+--- disksim-4.0-64_bits/diskmodel/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/diskmodel/Makefile	2008-12-19 12:15:28.000000000 +0100
+@@ -35,7 +35,7 @@
+ # -D_DISKMODEL_FREEBSD for the freebsd kernel (malloc foo)
+ # -D_BSD_SOURCE for bsd-ish userspace to get uint32 and friends from the
+ # right place
+-CFLAGS = -g -I. $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) -D_DM_SOURCE -Wall -Wshadow -Wno-unused -MD  # -O6  -fomit-frame-pointer -fexpensive-optimizations -fschedule-insns2 -march=pentium4
++CFLAGS = -O3 -fPIC -g -I. $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) -D_DM_SOURCE -Wall -Wshadow -Wno-unused -MD  # -O6  -fomit-frame-pointer -fexpensive-optimizations -fschedule-insns2 -march=pentium4
+ 
+ CXXFLAGS = -g -I. $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) -D_DM_SOURCE -Wall -Wno-unused  -MD
+ 
+diff -Naur disksim-4.0-64_bits/diskmodel/modules/Makefile disksim-4.0-cotson/diskmodel/modules/Makefile
+--- disksim-4.0-64_bits/diskmodel/modules/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/diskmodel/modules/Makefile	2008-12-19 12:15:28.000000000 +0100
+@@ -36,7 +36,7 @@
+ 
+ LIBPARAM=$(LIBPARAM_PREFIX)
+ PACKAGE=dm
+-CFLAGS = -g -D_DM_SOURCE $(LIBDDBG_CFLAGS) $(LIBPARAM_CFLAGS)
++CFLAGS = -O3 -fPIC -D_DM_SOURCE $(LIBDDBG_CFLAGS) $(LIBPARAM_CFLAGS)
+ 
+ PARAM_PROTO = disk.modspec mech_g1.modspec \
+ 	layout_g1.modspec layout_g1_zone.modspec \
+diff -Naur disksim-4.0-64_bits/diskmodel/tests/Makefile disksim-4.0-cotson/diskmodel/tests/Makefile
+--- disksim-4.0-64_bits/diskmodel/tests/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/diskmodel/tests/Makefile	2008-12-19 12:15:28.000000000 +0100
+@@ -28,7 +28,7 @@
+ 
+ include .paths
+ 
+-CFLAGS = -g $(DISKMODEL_CFLAGS) $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS)
++CFLAGS = -O3 -fPIC $(DISKMODEL_CFLAGS) $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS)
+ 
+ LDFLAGS = $(DISKMODEL_LDFLAGS) $(LIBPARAM_LDFLAGS) $(LIBDDBG_LDFLAGS)
+ 
+diff -Naur disksim-4.0-64_bits/install disksim-4.0-cotson/install
+--- disksim-4.0-64_bits/install	1970-01-01 01:00:00.000000000 +0100
++++ disksim-4.0-cotson/install	2008-12-19 12:15:28.000000000 +0100
+@@ -0,0 +1,60 @@
++#!/bin/zsh
++# (C) Copyright 2006-2009 Hewlett-Packard Development Company, L.P.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+//
+
++# $Id$
++
++error()
++{
++        echo $*
++        exit -1
++}
++
++TOOLS=$1
++TLIB=${TOOLS}/lib/
++TINC=${TOOLS}/include/
++REVISION=$(svnversion .)
++
++[[ ! -z $TOOLS ]]     || error "You must pass TOOLS dir as first parameter (in BRO, usually: /home/opt/cotson/tools/)"
++[[ -d $TOOLS ]]       || error "TOOLS dir is not a directory"
++[[ -e $TLIB ]]        || error "TOOLS dir does not have a lib subdirectory"
++[[ -e $TINC ]]        || error "TOOLS dir does not have an include subdirectory"
++[[ $REVISION != *M ]]  || error "This version comes from a modified source, please commit"
++[[ $REVISION != *:* ]] || error "This version comes from a unupdated source, please update"
++
++[[ ! -e $TLIB/libdisksim.a_${REVISION} ]] ||
++        error "libdisksim is already installed with this version '${REVISION}'"
++
++[[ ! -e $TINC/disksim-${REVISION} ]] ||
++        error "libdisksim headers are already installed with this version '${REVISION}'"
++       
++date=`date`
++if ( [[ -e lib/libdisksim-cotson.a ]] )
++{
++        # Compile disksim
++        echo "libdisksim-cotson.a does not exist, creating..."
++        make &> /dev/null
++}
++
++cp lib/libdisksim-cotson.a $TLIB/libdisksim.a_${REVISION} || error "Could not copy libdisksim-cotson.a (try being root)"
++mkdir -p $TINC/disksim-${REVISION}/disksim || error "Could not create include directory (try being root)"
++
++# Copy only .h files neded
++foreach s (src/disksim_assertlib.h src/disksim_global.h src/disksim_malloc.h
++           src/inline.h src/disksim_bitstring.h src/disksim_ioface.h src/disksim_rand48.h 
++		   src/disksim_reqflags.h)
++        cp $s $TINC/disksim-${REVISION}/disksim || error "Could not copy $s into include (try being root)"
++end
++
++# Copy file with version, revision and build date of disksim used
++vers=`cat version.h`
++cat << _EOF_ >> $TINC/disksim-${REVISION}/disksim/version.h
++#ifndef _DISKSIM_VERSION_INCLUDED_
++#define _DISKSIM_VERSION_INCLUDED_
++#define DISKSIM_REVISION "${REVISION}"
++${vers}
++#define DISKSIM_BUILD_DATE "${date}"
++#endif
++_EOF_
++
++
++echo "libdisksim revision ${REVISION} installed into $TOOLS"
+diff -Naur disksim-4.0-64_bits/libddbg/Makefile disksim-4.0-cotson/libddbg/Makefile
+--- disksim-4.0-64_bits/libddbg/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/libddbg/Makefile	2008-12-19 12:15:25.000000000 +0100
+@@ -32,7 +32,7 @@
+ 
+ # needs bitvector.h
+ # -D_LIBDDBG_FREEBSD for freebsd kernel
+-CFLAGS = -g -I../libparam
++CFLAGS = -O3 -fPIC -g -I../libparam
+ 
+ all: libddbg.a
+ 	mkdir -p include/libddbg lib
+diff -Naur disksim-4.0-64_bits/libparam/Makefile disksim-4.0-cotson/libparam/Makefile
+--- disksim-4.0-64_bits/libparam/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/libparam/Makefile	2008-12-19 12:15:25.000000000 +0100
+@@ -39,7 +39,7 @@
+ BISON=bison
+ YACC=$(BISON)
+ 
+-CFLAGS=-g -I$(LIBDDBG_INCL) -Wall
++CFLAGS=-O3 -fPIC -I$(LIBDDBG_INCL) -Wall
+ 
+ # input file parser
+ lex.libparam.c:	libparam.lex libparam.tab.h libparam.h
+diff -Naur disksim-4.0-64_bits/memsmodel/Makefile disksim-4.0-cotson/memsmodel/Makefile
+--- disksim-4.0-64_bits/memsmodel/Makefile	2008-12-19 12:14:41.000000000 +0100
++++ disksim-4.0-cotson/memsmodel/Makefile	2008-12-19 12:15:24.000000000 +0100
+@@ -34,7 +34,7 @@
+ DEBUG_OFLAGS = -g -DASSERTS # -DDEBUG=1
+ PROF_OFLAGS = -g -DASSERTS -p
+ GPROF_OFLAGS = -g -DASSERTS -pg
+-CFLAGS = $(DEBUG_OFLAGS) $(DISKSIM_CFLAGS) -I../ -I$(DISKSIM_PREFIX)/src
++CFLAGS = -O3 -fPIC $(DEBUG_OFLAGS) $(DISKSIM_CFLAGS) -I../ -I$(DISKSIM_PREFIX)/src
+ 
+ CC = gcc -Wall -Wno-unused -MD
+ CP = cp -p
+diff -Naur disksim-4.0-64_bits/memsmodel/modules/Makefile disksim-4.0-cotson/memsmodel/modules/Makefile
+--- disksim-4.0-64_bits/memsmodel/modules/Makefile	2008-12-19 12:14:41.000000000 +0100
++++ disksim-4.0-cotson/memsmodel/modules/Makefile	2008-12-19 12:15:24.000000000 +0100
+@@ -32,7 +32,7 @@
+ 
+ include ./.paths
+ 
+-CFLAGS=-g $(DISKSIM_CFLAGS) $(LIBDDBG_CFLAGS) $(LIBPARAM_CFLAGS) $(MEMSMODEL_CFLAGS) -I..
++CFLAGS=-O3 -fPIC $(DISKSIM_CFLAGS) $(LIBDDBG_CFLAGS) $(LIBPARAM_CFLAGS) $(MEMSMODEL_CFLAGS) -I..
+ 
+ LIBPARAM=$(LIBPARAM_PREFIX)
+ PACKAGE=memsmodel
+diff -Naur disksim-4.0-64_bits/src/disksim.c disksim-4.0-cotson/src/disksim.c
+--- disksim-4.0-64_bits/src/disksim.c	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/src/disksim.c	2008-12-19 12:15:25.000000000 +0100
+@@ -1071,6 +1071,11 @@
+ {
+   int i;
+   
++  // make sure it's called only once 
++  static int done = 0; 
++  if (done) return; 
++  done = 1; 
++		
+   if (outputfile) 
+   {
+     fclose (outputfile);
+@@ -1082,7 +1087,6 @@
+     fclose(disksim->iotracefile);
+   }
+   
+-  
+   iodriver_cleanup();
+   
+   if(outios) 
+diff -Naur disksim-4.0-64_bits/src/Makefile disksim-4.0-cotson/src/Makefile
+--- disksim-4.0-64_bits/src/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/src/Makefile	2008-12-19 12:15:25.000000000 +0100
+@@ -37,11 +37,12 @@
+ 
+ HP_FAST_OFLAGS = +O4
+ NCR_FAST_OFLAGS = -O4 -Hoff=BEHAVED 
++GCC_FAST_OFLAGS= -O3
+ FREEBLOCKS_OFLAGS =
+ DEBUG_OFLAGS = -g -DASSERTS # -DDEBUG=1
+ PROF_OFLAGS = -g -DASSERTS -p
+ GPROF_OFLAGS = -g -DASSERTS -pg
+-CFLAGS = -I. $(DISKMODEL_CFLAGS) $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) $(DEBUG_OFLAGS) $(FREEBLOCKS_OFLAGS) $(MEMSMODEL_CFLAGS) -D_INLINE 
++CFLAGS = -fPIC -I. $(DISKMODEL_CFLAGS) $(LIBPARAM_CFLAGS) $(LIBDDBG_CFLAGS) $(GCC_FAST_OFLAGS) $(FREEBLOCKS_OFLAGS) $(MEMSMODEL_CFLAGS) -D_INLINE 
+ 
+ FBSYSSIM_OFLAGS = -O6 -fomit-frame-pointer -fexpensive-optimizations -fschedule-insns2
+ 
+@@ -61,10 +62,10 @@
+ MODULEDEPS = modules
+ endif
+ 
+-all: disksim rms hplcomb syssim
++all: disksim rms hplcomb syssim libdisksim-cotson.a
+ 
+ clean:
+-	rm -f TAGS *.o disksim syssim rms hplcomb core libdisksim.a
++	rm -f TAGS *.o disksim syssim rms hplcomb core libdisksim.a libdisksim-cotson.a
+ 	$(MAKE) -C modules clean
+ 
+ realclean: clean
+@@ -124,6 +125,13 @@
+ 	mkdir -p ../lib
+ 	cp libdisksim.a ../lib
+ 
++# libdisksim for COTSon
++libdisksim-cotson.a: $(MODULEDEPS) $(DISKSIM_OBJ) disksim_interface.o
++	ar cru $@ $(DISKSIM_OBJ) modules/*.o ../libparam/*.o ../diskmodel/*.o ../diskmodel/modules/*.o ../memsmodel/*.o ../memsmodel/modules/*.o ../libddbg/*.o
++	ranlib $@
++	mkdir -p ../lib
++	cp libdisksim-cotson.a ../lib
++
+ disksim : $(MODULEDEPS) libdisksim.a disksim_main.o 
+ 	$(CC) $(CFLAGS) -o $@ disksim_main.o $(LDFLAGS)
+ 
+diff -Naur disksim-4.0-64_bits/src/modules/Makefile disksim-4.0-cotson/src/modules/Makefile
+--- disksim-4.0-64_bits/src/modules/Makefile	2008-12-19 12:14:42.000000000 +0100
++++ disksim-4.0-cotson/src/modules/Makefile	2008-12-19 12:15:25.000000000 +0100
+@@ -32,7 +32,7 @@
+ 
+ include .paths
+ 
+-CFLAGS=-g $(LIBDDBG_CFLAGS) $(LIBPARAM_CFLAGS) $(DISKMODEL_CFLAGS) -I..
++CFLAGS=-O3 -fPIC $(LIBDDBG_CFLAGS) $(LIBPARAM_CFLAGS) $(DISKMODEL_CFLAGS) -I..
+ 
+ LIBPARAM=$(LIBPARAM_PREFIX)
+ PACKAGE=disksim
+diff -Naur disksim-4.0-64_bits/utils/params/Makefile disksim-4.0-cotson/utils/params/Makefile
+--- disksim-4.0-64_bits/utils/params/Makefile	2008-12-19 12:14:41.000000000 +0100
++++ disksim-4.0-cotson/utils/params/Makefile	2008-12-19 12:15:27.000000000 +0100
+@@ -34,7 +34,7 @@
+ DISKSIM_CFLAGS=-I../../src
+ DISKSIM_LDFLAGS=-L../../src -ldisksim
+ 
+-CFLAGS = -g \
++CFLAGS = -O3 -fPIC \
+         $(DISKSIM_CFLAGS) \
+         $(DISKMODEL_CFLAGS) \
+         $(LIBPARAM_CFLAGS) \
+diff -Naur disksim-4.0-64_bits/version.h disksim-4.0-cotson/version.h
+--- disksim-4.0-64_bits/version.h	1970-01-01 01:00:00.000000000 +0100
++++ disksim-4.0-cotson/version.h	2008-12-19 12:15:28.000000000 +0100
+@@ -0,0 +1 @@
++#define DISKSIM_VERSION "4.0"

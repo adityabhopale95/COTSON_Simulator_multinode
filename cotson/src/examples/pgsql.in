@@ -1,0 +1,118 @@
+curdir=os.getenv("PWD")
+DBF1=curdir..'/'..DBFILE
+clean_sandbox=false
+if EXP == 1  then
+    stq="500k"
+    expdesc="test run SIMPLE TIMING QUANTUM="..stq
+elseif EXP == 2 then
+    smfun="400k"
+    smwrm="50k"
+    smsim="50k"
+    expdesc="test run SMARTS SAMPLING FUN="..smfun.." WRM="..smwrm.." SIM="..smsim
+elseif EXP == 3 then
+    dsfun1="100"
+    dswrm1="100"
+    dssim1="50"
+    dsq1=dsfun1+dswrm1+dssim1
+    dsfun=dsfun1.."k"
+    dswrm=dswrm1.."k"
+    dssim=dssim1.."k"
+    dsq=dsq1.."k"
+    dssen="300"
+    dsmxi="10"
+    dsstr="I/O-"..dssen.."-"..dsq.."-"..dsmxi
+    expdesc="test run DYNAMIC SAMPLING FUN="..dsfun.." WRM="..dswrm.." SIM="..dssim.." -- "..dsstr
+else
+    expdesc="test run #"..EXP
+end
+options = {
+    fastforward="100M",
+    time_feedback = true,
+    heartbeat = {
+        type="pgsql",
+        dbconn="host=localhost dbname=cotson user=cotson password=cotson",
+        experiment_id=EXP,
+        experiment_description="T1",
+    },
+}
+
+if EXP == 1  then
+     -- ### Always-on simulation ###
+    options.sampler={ type="simple", quantum="500k" }
+    options.max_nanos="250M"
+elseif EXP == 2 then
+    -- ### Sampled (interval) simulation ###
+    options.max_nanos="250M"
+    options.sampler = { type="interval", functional="400k", warming="50k", simulation="50k" }
+elseif EXP == 3 then
+    -- ### Sampled (dynamic) simulation ###
+    options.max_nanos="250M"
+    options.sampler={ type="dynamic", functional="100k", warming="100k", simulation="50k",
+    maxfunctional=10, sensitivity="300",
+        variable={"cpu.*.other_exceptions", "cpu.*.iocount"}}
+else
+    io.stderr:write("#### ERROR: EXP must be 1,2 or 3")
+    os.exit(1)
+end
+
+one_node_script="run_interactive"
+display=os.getenv("DISPLAY")
+
+simnow.commands=function()
+	use_bsd('1p-karmic64.bsd')
+	use_hdd('karmic64.img')
+	set_journal()
+	send_keyboard('gcc -S -o - -O3 -c -w /home/user/test.i')
+end
+
+function build()
+	i=0
+	while i < disks() do
+		disk=get_disk(i)
+		disk:timer{ name='disk'..i, type="simple_disk" }
+		i=i+1
+	end
+
+	i=0
+	while i < nics() do
+		nic=get_nic(i)
+		nic:timer{ name='nic'..i, type="simple_nic" }
+		i=i+1
+	end
+
+	x=cpus()
+	if x ~= 1 then
+		error("This experiment only wants to handle 1 cpu")
+	end
+
+	cpu=get_cpu(0)
+	cpu:timer{ name='cpu0', type="timer1" }
+
+	mem=Memory{ name="main", latency=150  } 
+
+    l2=Cache{ name="l2cache", size="512kB", 
+		line_size=16, latency=20, num_sets=4, next=mem, 
+		write_policy="WB", write_allocate="true" }
+    t2=TLB{ name="l2tlb", page_size="4kB", 
+		entries=512, latency=80, num_sets=4, next=mem, 
+		write_policy="WB", write_allocate="true" }
+
+    ic=Cache{ name="icache", size="16kB", line_size=16, 
+		latency=0, num_sets=2, next=l2, 
+		write_policy="WT", write_allocate="false" }
+    dc=Cache{ name="dcache", size="16kB", line_size=16, 
+		latency=0, num_sets=2, next=l2, 
+		write_policy="WT", write_allocate="false" }
+    it=TLB{ name="itlb", page_size="4kB", entries=40, 
+		latency=0, num_sets=40, next=t2,	
+		write_policy="WT", write_allocate="false" }
+    dt=TLB{ name="dtlb", page_size="4kB", entries=40, 
+		latency=0, num_sets=40, next=t2, 
+		write_policy="WT", write_allocate="false" }
+
+	cpu:instruction_cache(ic)
+	cpu:data_cache(dc)
+	cpu:instruction_tlb(it)
+	cpu:data_tlb(dt)
+end
+-- vim:ft=lua

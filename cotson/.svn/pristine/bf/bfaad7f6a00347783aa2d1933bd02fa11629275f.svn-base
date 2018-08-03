@@ -1,0 +1,5 @@
+#!/bin/bash
+    objdump -d $1 | sed \
+	-e 's/prefetchnta 0x2daf0001(\(.*\),1)/TSU_TINIT(\1)/' \
+	-e 's/prefetchnta 0x2daf0002(\(.*\),1)/TSU_TREAD(\1)/' \
+	-e 's/prefetchnta 0x2daf0003(\(.*\),1)/TSU_TWRITE(\1)/'

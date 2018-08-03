@@ -1,0 +1,20 @@
+^heartbeat.logfile
+^disk[0-9].tracefile
+^Checking.*rc
+^Using image path
+^Opening 
+^1 exec> open
+^1 exec> ide:[0-9].image
+^MASTER drive Image file is now
+^ATA: Image
+^sh: line 1:.*Aborted
+Output file name
+^Known Device:
+^Device Library:
+valid_translation_bytes
+metadata_bytes
+other_exceptions
+print_unknown
+allow_unknown
+plain_invalidations
+nan$
